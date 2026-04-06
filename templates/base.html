@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CivicEye</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="background-color: #e8e5d9;">
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg bg-light px-4 py-3 shadow-sm">
+
+    <!-- LEFT -->
+    <a class="navbar-brand fw-bold">CivicEye</a>
+
+    <!-- CENTER LINKS -->
+    <div class="mx-auto">
+        <a class="mx-3 text-dark text-decoration-none">Initiatives</a>
+        <a class="mx-3 text-dark text-decoration-none">Impact</a>
+        <a class="mx-3 text-dark text-decoration-none">Community</a>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+        {% if user.is_authenticated %}
+            <a href="/accounts/logout/" class="btn btn-outline-danger me-2">Logout</a>
+        {% else %}
+            <a href="/accounts/login/" class="btn btn-outline-dark me-2">Login</a>
+        {% endif %}
+
+        <a class="btn btn-dark">Report Issue</a>
+    </div>
+
+</nav>
+
+<!-- CONTENT -->
+<div class="container mt-5">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
