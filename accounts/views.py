@@ -45,7 +45,7 @@ def logout_view(request):
 
 # TEMP DASHBOARDS
 def citizen_dashboard(request):
-    return HttpResponse("Citizen Dashboard")
+    return render(request, 'accounts/dashboard.html')
 
 def worker_dashboard(request):
     return HttpResponse("Worker Dashboard")
