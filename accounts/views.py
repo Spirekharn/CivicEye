@@ -52,3 +52,6 @@ def worker_dashboard(request):
 
 def admin_dashboard(request):
     return HttpResponse("Admin Dashboard")
+
+def about_view(request):
+    return render(request, 'accounts/about.html')
