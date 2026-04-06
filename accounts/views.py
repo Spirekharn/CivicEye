@@ -1,39 +1,37 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
-from .forms import RegisterForm
 from django.http import HttpResponse
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, get_user_model
+from .forms import RegisterForm
 
+# STEP 4: Set up the custom user model reference
+User = get_user_model()
 
 def register_view(request):
-    form = RegisterForm()
-
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('citizen_dashboard')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
-    return render(request, 'accounts/register.html', {'form': form})
+        if username and password:
+            User.objects.create_user(username=username, password=password)
+            messages.success(request, "Registered successfully!")
+            return redirect('login')
+
+    return render(request, 'accounts/register.html')
 
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
-
-            # ROLE BASED REDIRECT
-            if user.role == 'admin':
-                return redirect('admin_dashboard')
-            elif user.role == 'worker':
-                return redirect('worker_dashboard')
-            else:
-                return redirect('citizen_dashboard')
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Invalid credentials")
 
     return render(request, 'accounts/login.html')
 
@@ -55,3 +53,6 @@ def admin_dashboard(request):
 
 def about_view(request):
     return render(request, 'accounts/about.html')
+
+def dashboard_view(request):
+    return render(request, 'accounts/dashboard.html')
