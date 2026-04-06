@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>CivicEye</title>
@@ -8,32 +9,37 @@
 <body style="background-color: #e8e5d9;">
 
 <!-- NAVBAR -->
+
 <nav class="navbar navbar-expand-lg bg-light px-4 py-3 shadow-sm">
 
-    <!-- LEFT -->
-    <a class="navbar-brand fw-bold">CivicEye</a>
+```
+<!-- LEFT (LOGO) -->
+<a href="/" class="navbar-brand fw-bold">CivicEye</a>
 
-    <!-- CENTER LINKS -->
-    <div class="mx-auto">
-        <a class="mx-3 text-dark text-decoration-none">Initiatives</a>
-        <a class="mx-3 text-dark text-decoration-none">Impact</a>
-        <a class="mx-3 text-dark text-decoration-none">Community</a>
-    </div>
+<!-- CENTER LINKS -->
+<div class="mx-auto">
+    <a href="#" class="mx-3 text-dark text-decoration-none">Initiatives</a>
+    <a href="#" class="mx-3 text-dark text-decoration-none">Impact</a>
+    <a href="#" class="mx-3 text-dark text-decoration-none">Community</a>
+    <a href="/accounts/about/" class="mx-3 text-dark text-decoration-none fw-semibold">About</a>
+</div>
 
-    <!-- RIGHT -->
-    <div>
-        {% if user.is_authenticated %}
-            <a href="/accounts/logout/" class="btn btn-outline-danger me-2">Logout</a>
-        {% else %}
-            <a href="/accounts/login/" class="btn btn-outline-dark me-2">Login</a>
-        {% endif %}
+<!-- RIGHT -->
+<div>
+    {% if user.is_authenticated %}
+        <a href="/accounts/logout/" class="btn btn-outline-danger me-2">Logout</a>
+    {% else %}
+        <a href="/accounts/login/" class="btn btn-outline-dark me-2">Login</a>
+    {% endif %}
 
-        <a class="btn btn-dark">Report Issue</a>
-    </div>
+    <a href="#" class="btn btn-dark">Report Issue</a>
+</div>
+```
 
 </nav>
 
 <!-- CONTENT -->
+
 <div class="container mt-5">
     {% block content %}{% endblock %}
 </div>
