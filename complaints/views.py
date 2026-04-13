@@ -1,17 +1,18 @@
 from django.shortcuts import render, redirect
-from .forms import ComplaintForm
-from django.contrib.auth.decorators import login_required
+from .models import Complaint
 
-@login_required
 def create_complaint(request):
     if request.method == 'POST':
-        form = ComplaintForm(request.POST, request.FILES)
-        if form.is_valid():
-            obj = form.save(commit=False)
-            obj.user = request.user
-            obj.save()
-            return redirect('/accounts/dashboard/')
-    else:
-        form = ComplaintForm()
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        image = request.FILES.get('image')
 
-    return render(request, 'complaints/create.html', {'form': form})
+        Complaint.objects.create(
+            title=title,
+            description=description,
+            image=image
+        )
+
+        return redirect('/complaints/create/')  # simple reload
+
+    return render(request, 'complaints/create.html')
