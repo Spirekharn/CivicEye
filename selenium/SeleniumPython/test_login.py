@@ -21,3 +21,5 @@ time.sleep(3)
 assert "dashboard" in driver.current_url.lower()
 
 driver.quit()
+
+

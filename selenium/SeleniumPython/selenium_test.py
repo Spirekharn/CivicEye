@@ -23,5 +23,6 @@ except Exception as e:
 
 
 
+
 # Close browser
 driver.quit()
