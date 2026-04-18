@@ -22,5 +22,6 @@ except Exception as e:
     print("No button found:", e)
 
 
+
 # Close browser
 driver.quit()
