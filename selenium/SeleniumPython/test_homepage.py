@@ -1,16 +1,19 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import time
+from selenium.webdriver.common.by import By
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+def test_homepage_title(driver, live_server):
+    driver.get(live_server.url + "/accounts/login/")
+    time.sleep(2)
 
-driver.get("http://127.0.0.1:8000")
-
-# Check page loaded
-assert "CivicEye" in driver.title
-
-driver.quit()
+    assert "CivicEye" in driver.title
 
 
+def test_navigation_to_login(driver, live_server):
+    driver.get(live_server.url + "/accounts/dashboard/")
+    time.sleep(2)
 
+    # Click login link
+    driver.find_element(By.LINK_TEXT, "Login").click()
+    time.sleep(2)
 
+    assert "login" in driver.current_url.lower()
