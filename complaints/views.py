@@ -13,6 +13,6 @@ def create_complaint(request):
             image=image
         )
 
-        return redirect('/complaints/create/')  # simple reload
+        return redirect('/complaints/create/')
 
     return render(request, 'complaints/create.html')
