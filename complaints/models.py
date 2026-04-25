@@ -2,15 +2,33 @@ from django.db import models
 from django.conf import settings
 
 class Complaint(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('In Progress', 'In Progress'),
+        ('Resolved', 'Resolved'),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True,
         blank=True
     )
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     image = models.ImageField(upload_to='complaints/', null=True, blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_complaints'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

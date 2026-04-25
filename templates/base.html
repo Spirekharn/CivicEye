@@ -18,21 +18,21 @@
 
 <!-- CENTER LINKS -->
 <div class="mx-auto">
-    <a href="#" class="mx-3 text-dark text-decoration-none">Initiatives</a>
-    <a href="#" class="mx-3 text-dark text-decoration-none">Impact</a>
-    <a href="#" class="mx-3 text-dark text-decoration-none">Community</a>
+    <a href="/" class="mx-3 text-dark text-decoration-none">Home</a>
+    <a href="/complaints/" class="mx-3 text-dark text-decoration-none">Complaints</a>
+    <a href="/dashboard/" class="mx-3 text-dark text-decoration-none">Dashboard</a>
     <a href="/accounts/about/" class="mx-3 text-dark text-decoration-none fw-semibold">About</a>
 </div>
 
 <!-- RIGHT -->
 <div>
     {% if user.is_authenticated %}
-        <a href="/accounts/logout/" class="btn btn-outline-danger me-2">Logout</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger me-2">Logout</a>
     {% else %}
         <a href="/accounts/login/" class="btn btn-outline-dark me-2">Login</a>
     {% endif %}
 
-    <a href="#" class="btn btn-dark">Report Issue</a>
+    <a href="/complaints/create/" class="btn btn-dark">Report Issue</a>
 </div>
 ```
 
