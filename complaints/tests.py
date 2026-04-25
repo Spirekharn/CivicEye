@@ -14,3 +14,9 @@ class ComplaintDetailTest(TestCase):
     def test_detail_view(self):
         response = self.client.get('/complaints/1/')
         self.assertEqual(response.status_code, 200)
+
+class ComplaintSearchTest(TestCase):
+
+    def test_search(self):
+        response = self.client.get('/complaints/?q=test')
+        self.assertEqual(response.status_code, 200)
