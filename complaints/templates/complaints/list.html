@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">All Complaints</h2>
+
+    {% for c in complaints %}
+        <div class="card p-3 mb-3 shadow-sm">
+
+            <h5>{{ c.title }}</h5>
+            <p>{{ c.description }}</p>
+
+            {% if c.image %}
+                <img src="{{ c.image.url }}" width="200">
+            {% endif %}
+
+        </div>
+    {% empty %}
+        <p>No complaints yet.</p>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
