@@ -6,5 +6,6 @@ from . import views
 
 urlpatterns = [
     path('create/', views.create_complaint, name='create_complaint'),
-    path('', views.complaint_list, name='complaint_list'),  # 👈 IMPORTANT
+    path('', views.complaint_list, name='complaint_list'),
+    path('<int:id>/', views.complaint_detail, name='complaint_detail'),
 ]

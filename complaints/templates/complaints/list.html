@@ -9,7 +9,9 @@
     {% for c in complaints %}
         <div class="card p-3 mb-3 shadow-sm">
 
-            <h5>{{ c.title }}</h5>
+            <h5>
+                <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
+            </h5>
             <p>{{ c.description }}</p>
 
             {% if c.image %}
