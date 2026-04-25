@@ -20,3 +20,13 @@ class ComplaintSearchTest(TestCase):
     def test_search(self):
         response = self.client.get('/complaints/?q=test')
         self.assertEqual(response.status_code, 200)
+
+class ComplaintSuccessMessageTest(TestCase):
+
+    def test_success_message(self):
+        response = self.client.post('/complaints/create/', {
+            'title': 'Test',
+            'description': 'Test desc'
+        }, follow=True)
+
+        self.assertContains(response, "successfully")
