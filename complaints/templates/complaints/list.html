@@ -6,6 +6,11 @@
 
     <h2 class="mb-4">All Complaints</h2>
 
+    <form method="GET" class="mb-4">
+        <input type="text" name="q" placeholder="Search complaints..."
+           class="form-control" value="{{ query }}">
+    </form>
+
     {% for c in complaints %}
         <div class="card p-3 mb-3 shadow-sm">
 
