@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from .models import Complaint
 
 def complaint_detail(request, id):
@@ -29,16 +30,17 @@ def create_complaint(request):
         description = request.POST.get('description')
         image = request.FILES.get('image')
 
-
         if not title or not description:
             error = "Title and Description are required"
-
         else:
             Complaint.objects.create(
                 title=title,
                 description=description,
                 image=image
             )
+
+            messages.success(request, "Complaint submitted successfully!")
+
             return redirect('/complaints/')
 
     return render(request, 'complaints/create.html', {'error': error})
