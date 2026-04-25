@@ -1,6 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Complaint
 
+def complaint_list(request):
+    from .models import Complaint
+    complaints = Complaint.objects.all()
+    return render(request, 'complaints/list.html', {'complaints': complaints})
+
 def create_complaint(request):
     error = None
 
@@ -19,6 +24,6 @@ def create_complaint(request):
                 description=description,
                 image=image
             )
-            return redirect('/complaints/create/')
+            return redirect('/complaints/')
 
     return render(request, 'complaints/create.html', {'error': error})
