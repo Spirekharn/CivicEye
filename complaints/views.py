@@ -1,6 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Complaint
 
+def complaint_detail(request, id):
+    from .models import Complaint
+    complaint = Complaint.objects.get(id=id)
+    return render(request, 'complaints/detail.html', {'complaint': complaint})
+
 def complaint_list(request):
     from .models import Complaint
     complaints = Complaint.objects.all()
