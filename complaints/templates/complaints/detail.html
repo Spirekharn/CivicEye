@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card p-4 shadow">
+
+        <h2>{{ complaint.title }}</h2>
+
+        <p class="text-muted">
+            {{ complaint.created_at }}
+        </p>
+
+        <p>{{ complaint.description }}</p>
+
+        {% if complaint.image %}
+            <img src="{{ complaint.image.url }}" width="300">
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
