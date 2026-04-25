@@ -8,8 +8,18 @@ def complaint_detail(request, id):
 
 def complaint_list(request):
     from .models import Complaint
-    complaints = Complaint.objects.all()
-    return render(request, 'complaints/list.html', {'complaints': complaints})
+
+    query = request.GET.get('q')
+
+    if query:
+        complaints = Complaint.objects.filter(title__icontains=query)
+    else:
+        complaints = Complaint.objects.all()
+
+    return render(request, 'complaints/list.html', {
+        'complaints': complaints,
+        'query': query
+    })
 
 def create_complaint(request):
     error = None
