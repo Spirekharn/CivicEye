@@ -1,15 +1,16 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from .models import Complaint
 
+User = get_user_model()
+
 def complaint_detail(request, id):
-    from .models import Complaint
     complaint = Complaint.objects.get(id=id)
     return render(request, 'complaints/detail.html', {'complaint': complaint})
 
-def complaint_list(request):
-    from .models import Complaint
 
+def complaint_list(request):
     query = request.GET.get('q')
 
     if query:
@@ -21,6 +22,7 @@ def complaint_list(request):
         'complaints': complaints,
         'query': query
     })
+
 
 def create_complaint(request):
     error = None
@@ -34,13 +36,30 @@ def create_complaint(request):
             error = "Title and Description are required"
         else:
             Complaint.objects.create(
+                user=request.user,
                 title=title,
                 description=description,
-                image=image
+                image=image,
+                status='Pending'
             )
 
             messages.success(request, "Complaint submitted successfully!")
-
             return redirect('/complaints/')
 
     return render(request, 'complaints/create.html', {'error': error})
+
+def assign_complaint(request, id):
+    complaint = Complaint.objects.get(id=id)
+    users = User.objects.all()
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user')
+        complaint.assigned_to_id = user_id
+        complaint.status = 'In Progress'
+        complaint.save()
+        return redirect('/complaints/')
+
+    return render(request, 'complaints/assign.html', {
+        'complaint': complaint,
+        'users': users
+    })

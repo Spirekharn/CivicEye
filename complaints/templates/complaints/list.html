@@ -17,7 +17,21 @@
             <h5>
                 <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
             </h5>
+
             <p>{{ c.description }}</p>
+
+            <!-- STATUS -->
+            <p>
+                Status:
+                <span class="badge bg-secondary">
+                    {{ c.status }}
+                </span>
+            </p>
+
+            <!-- ASSIGN BUTTON -->
+            <a href="/complaints/assign/{{ c.id }}/" class="btn btn-sm btn-warning mb-2">
+                Assign
+            </a>
 
             {% if c.image %}
                 <img src="{{ c.image.url }}" width="200">
