@@ -11,8 +11,13 @@
            class="form-control" value="{{ query }}">
     </form>
 
+    <a href="/complaints/create/" class="btn btn-dark mb-3">
+    + Create Complaint
+    </a>
+
+
     {% for c in complaints %}
-        <div class="card p-3 mb-3 shadow-sm">
+        <div class="card p-4 mb-4 shadow border-0" style="border-radius:15px;">
 
             <h5>
                 <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
@@ -23,9 +28,13 @@
             <!-- STATUS -->
             <p>
                 Status:
-                <span class="badge bg-secondary">
-                    {{ c.status }}
-                </span>
+                {% if c.status == "Pending" %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% elif c.status == "In Progress" %}
+                    <span class="badge bg-info text-dark">In Progress</span>
+                {% elif c.status == "Resolved" %}
+                    <span class="badge bg-success">Resolved</span>
+                {% endif %}
             </p>
 
             <!-- ASSIGN BUTTON -->
