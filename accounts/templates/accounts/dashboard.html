@@ -2,9 +2,51 @@
 
 {% block content %}
 
-<div class="text-center">
-    <h1>Dashboard (WIP)</h1>
-    <p>Welcome to CivicEye</p>
+<div class="container mt-5">
+
+    <h2 class="text-center mb-4">Dashboard</h2>
+
+    <p class="text-center">
+    Logged in as: <strong>{{ request.user.username }}</strong>
+    </p>
+
+    <div class="row text-center">
+
+        <div class="col-md-3">
+            <div class="card p-4 shadow">
+                <h5>Total</h5>
+                <h2>{{ total }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-4 shadow">
+                <h5>Pending</h5>
+                <h2>{{ pending }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-4 shadow">
+                <h5>In Progress</h5>
+                <h2>{{ in_progress }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-4 shadow">
+                <h5>Resolved</h5>
+                <h2>{{ resolved }}</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="/complaints/" class="btn btn-dark me-2">View Complaints</a>
+        <a href="/complaints/create/" class="btn btn-outline-dark">Create Complaint</a>
+    </div>
+
 </div>
 
 {% endblock %}

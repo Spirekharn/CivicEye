@@ -54,5 +54,34 @@ def admin_dashboard(request):
 def about_view(request):
     return render(request, 'accounts/about.html')
 
+from complaints.models import Complaint
+
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html')
+    total = Complaint.objects.count()
+    pending = Complaint.objects.filter(status='Pending').count()
+    in_progress = Complaint.objects.filter(status='In Progress').count()
+    resolved = Complaint.objects.filter(status='Resolved').count()
+
+    context = {
+        'total': total,
+        'pending': pending,
+        'in_progress': in_progress,
+        'resolved': resolved,
+    }
+
+    return render(request, 'accounts/dashboard.html', context)
+
+def create_superadmin(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if username and password:
+            User.objects.create_user(
+                username=username,
+                password=password,
+                role='superadmin'
+            )
+            return redirect('login')
+
+    return render(request, 'accounts/create_superadmin.html')

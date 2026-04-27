@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">All Complaints</h2>
+
+    <form method="GET" class="mb-4">
+        <input type="text" name="q" placeholder="Search complaints..."
+           class="form-control" value="{{ query }}">
+    </form>
+
+    <a href="/complaints/create/" class="btn btn-dark mb-3">
+    + Create Complaint
+    </a>
+
+
+    {% for c in complaints %}
+        <div class="card p-4 mb-4 shadow border-0" style="border-radius:15px;">
+
+            <h5>
+                <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
+            </h5>
+
+            <p>{{ c.description }}</p>
+
+            <!-- STATUS -->
+            <p>
+                Status:
+                {% if c.status == "Pending" %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% elif c.status == "In Progress" %}
+                    <span class="badge bg-info text-dark">In Progress</span>
+                {% elif c.status == "Resolved" %}
+                    <span class="badge bg-success">Resolved</span>
+                {% endif %}
+            </p>
+
+            <!-- ASSIGN BUTTON -->
+            <a href="/complaints/assign/{{ c.id }}/" class="btn btn-sm btn-warning mb-2">
+                Assign
+            </a>
+
+            {% if c.image %}
+                <img src="{{ c.image.url }}" width="200">
+            {% endif %}
+
+        </div>
+    {% empty %}
+        <p>No complaints yet.</p>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
