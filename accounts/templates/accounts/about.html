@@ -1,28 +1,94 @@
 {% extends 'base.html' %}
-
 {% block content %}
 
-<div class="container">
+<div class="container text-center mt-5">
 
-    <div class="text-center mb-5">
-        <h1 class="fw-bold">About CivicEye</h1>
-        <p class="text-muted">Smart Civic Complaint Management System</p>
+    <!-- hero -->
+    <h1 style="font-size:48px; font-weight:700; margin-bottom:10px;">
+        A Smarter Way to Improve Your City
+    </h1>
+
+    <p style="color:#6c757d; margin-bottom:25px;">
+        Transparent, fast, and accountable civic complaint management
+    </p>
+
+    <!-- buttons -->
+    <div style="margin-bottom:40px;">
+        <a href="/complaints/create/"
+           style="background:#212529; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; margin-right:10px;">
+            Report a Problem
+        </a>
+
+        <a href="/accounts/login/"
+           style="border:1px solid #212529; padding:12px 24px; border-radius:8px; text-decoration:none; color:#212529;">
+            Login
+        </a>
     </div>
 
-    <div class="card p-4 shadow-lg" style="border-radius: 20px;">
-        <p>
-            CivicEye is a platform designed to bridge the gap between citizens and municipal authorities.
-            It enables users to report civic issues, track complaints, and ensure accountability through a transparent system.
-        </p>
+    <!-- stat -->
+    <h3 style="margin-bottom:30px;">
+        {{ total }}+ Reports Submitted
+    </h3>
 
-        <p>
-            The system uses role-based access for Citizens, Workers, Surveyors, and Admins to efficiently manage complaints,
-            assign tasks, and monitor progress.
-        </p>
+</div>
 
-        <p>
-            Our goal is to create smarter cities by empowering citizens and improving government response systems.
-        </p>
+<hr style="margin:50px 0;">
+
+<!-- HOW IT WORKS -->
+<div class="container text-center">
+
+    <h2 style="margin-bottom:40px;">How It Works</h2>
+
+    <div style="display:flex; justify-content:space-between; gap:20px;">
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h4>1. Report</h4>
+            <p style="color:#6c757d;">Submit a complaint with details and location</p>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h4>2. Track</h4>
+            <p style="color:#6c757d;">Monitor status updates in real-time</p>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h4>3. Resolve</h4>
+            <p style="color:#6c757d;">Authorities fix the issue and close it</p>
+        </div>
+
+    </div>
+
+</div>
+
+<hr style="margin:50px 0;">
+
+<!-- SYSTEM STATS -->
+<div class="container text-center">
+
+    <h2 style="margin-bottom:40px;">System Stats</h2>
+
+    <div style="display:flex; justify-content:space-between; gap:20px;">
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h5>Total</h5>
+            <h3>{{ total }}</h3>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h5>Pending</h5>
+            <h3 style="color:#ffc107;">{{ pending }}</h3>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h5>In Progress</h5>
+            <h3 style="color:#0dcaf0;">{{ in_progress }}</h3>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:100%;">
+            <h5>Resolved</h5>
+            <h3 style="color:#198754;">{{ resolved }}</h3>
+        </div>
+
     </div>
 
 </div>

@@ -1,43 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>CivicEye</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
         body {
             background: linear-gradient(135deg, #e8e5d9, #d6d2c4);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Glass Navbar */
+        /* NAVBAR */
         .glass-nav {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-        }
-
-        /* Card Styling */
-        .card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
             border-radius: 15px;
-            border: none;
-            transition: 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-3px);
+        .nav-link-custom {
+            text-decoration: none;
+            color: #333;
+            margin: 0 12px;
+            font-weight: 500;
         }
 
-        /* Buttons */
+        .nav-link-custom:hover {
+            color: black;
+        }
+
+        /* BUTTONS */
         .btn-dark {
             border-radius: 10px;
+            padding: 8px 16px;
         }
 
         .btn-outline-dark {
             border-radius: 10px;
+        }
+
+        /* MAIN CONTAINER */
+        .main-container {
+            padding-top: 40px;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            font-size: 14px;
+            color: #555;
         }
     </style>
 </head>
@@ -46,33 +65,44 @@
 
 <!-- NAVBAR -->
 <div class="container mt-3">
-    <nav class="navbar navbar-expand-lg glass-nav px-4 py-3 shadow-sm">
+    <nav class="navbar glass-nav px-4 py-3 shadow-sm d-flex justify-content-between align-items-center">
 
         <!-- LOGO -->
-        <a href="/" class="navbar-brand fw-bold">CivicEye</a>
+        <a href="/" class="fw-bold fs-4 text-dark text-decoration-none">
+            CivicEye
+        </a>
 
-        <!-- LINKS -->
-        <div class="mx-auto">
-            <a href="/" class="mx-3 text-dark text-decoration-none">Home</a>
-            <a href="/complaints/" class="mx-3 text-dark text-decoration-none">Complaints</a>
-            <a href="/accounts/dashboard/" class="mx-3 text-dark text-decoration-none">Dashboard</a>
-            <a href="/accounts/about/" class="mx-3 text-dark text-decoration-none fw-semibold">About</a>
+        <!-- CENTER LINKS -->
+        <div class="d-none d-md-block">
+            <a href="/" class="nav-link-custom">Home</a>
+            <a href="/complaints/" class="nav-link-custom">Complaints</a>
+            <a href="/accounts/dashboard/" class="nav-link-custom">Dashboard</a>
+            <a href="/accounts/about/" class="nav-link-custom">About</a>
         </div>
 
         <!-- RIGHT SIDE -->
         <div>
             {% if user.is_authenticated %}
+
                 {% if user.role == 'superadmin' %}
                     <a href="/accounts/create-superadmin/" class="btn btn-warning me-2">
-                        Super Admin Panel
+                        Super Admin
                     </a>
                 {% endif %}
 
-                <a href="{% url 'logout' %}" class="btn btn-outline-danger me-2">Logout</a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger me-2">
+                    Logout
+                </a>
+
             {% else %}
-                <a href="/accounts/login/" class="btn btn-outline-dark me-2">Login</a>
+                <a href="/accounts/login/" class="btn btn-outline-dark me-2">
+                    Login
+                </a>
             {% endif %}
-            <a href="/complaints/create/" class="btn btn-dark">Report Issue</a>
+
+            <a href="/complaints/create/" class="btn btn-dark">
+                Report Issue
+            </a>
         </div>
 
     </nav>
@@ -80,18 +110,24 @@
 
 <!-- MESSAGES -->
 {% if messages %}
-    <div class="container mt-3">
-        {% for message in messages %}
-            <div class="alert alert-success shadow-sm">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
+<div class="container mt-3">
+    {% for message in messages %}
+        <div class="alert alert-success shadow-sm">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
 {% endif %}
 
-<!-- CONTENT -->
-<div class="container mt-5">
-    {% block content %}{% endblock %}
+<!-- MAIN CONTENT -->
+<div class="container main-container">
+    {% block content %}
+    {% endblock %}
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    CivicEye © 2026 • Built for transparency and accountability
 </div>
 
 </body>
