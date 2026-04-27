@@ -1,15 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .models import Complaint
 
 User = get_user_model()
 
+
+# complaint detail
 def complaint_detail(request, id):
-    complaint = Complaint.objects.get(id=id)
+    complaint = get_object_or_404(Complaint, id=id)
     return render(request, 'complaints/detail.html', {'complaint': complaint})
 
 
+# complaint list
 def complaint_list(request):
     query = request.GET.get('q')
 
@@ -24,6 +27,7 @@ def complaint_list(request):
     })
 
 
+# create complaint
 def create_complaint(request):
     error = None
 
@@ -48,15 +52,22 @@ def create_complaint(request):
 
     return render(request, 'complaints/create.html', {'error': error})
 
+
+# assign complaint
 def assign_complaint(request, id):
-    complaint = Complaint.objects.get(id=id)
-    users = User.objects.all()
+    complaint = get_object_or_404(Complaint, id=id)
+
+
+    users = User.objects.filter(role__in=['worker', 'admin'])
 
     if request.method == 'POST':
         user_id = request.POST.get('user')
+
         complaint.assigned_to_id = user_id
         complaint.status = 'In Progress'
         complaint.save()
+
+        messages.success(request, "Complaint assigned successfully")
         return redirect('/complaints/')
 
     return render(request, 'complaints/assign.html', {

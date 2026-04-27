@@ -12,20 +12,21 @@
     </form>
 
     <a href="/complaints/create/" class="btn btn-dark mb-3">
-    + Create Complaint
+        + Create Complaint
     </a>
-
 
     {% for c in complaints %}
         <div class="card p-4 mb-4 shadow border-0" style="border-radius:15px;">
 
+            <!-- title -->
             <h5>
                 <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
             </h5>
 
+            <!-- description -->
             <p>{{ c.description }}</p>
 
-            <!-- STATUS -->
+            <!-- status -->
             <p>
                 Status:
                 {% if c.status == "Pending" %}
@@ -37,11 +38,22 @@
                 {% endif %}
             </p>
 
-            <!-- ASSIGN BUTTON -->
+            <!-- assigned user -->
+            <p>
+                Assigned To:
+                {% if c.assigned_to %}
+                    <strong>{{ c.assigned_to.username }}</strong>
+                {% else %}
+                    <span class="text-muted">Not Assigned</span>
+                {% endif %}
+            </p>
+
+            <!-- assign button -->
             <a href="/complaints/assign/{{ c.id }}/" class="btn btn-sm btn-warning mb-2">
                 Assign
             </a>
 
+            <!-- image -->
             {% if c.image %}
                 <img src="{{ c.image.url }}" width="200">
             {% endif %}
