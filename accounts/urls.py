@@ -11,4 +11,5 @@ urlpatterns = [
     path('citizen-dashboard/', views.citizen_dashboard, name='citizen_dashboard'),
     path('about/', views.about_view, name='about'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('create-superadmin/', views.create_superadmin, name='create_superadmin'),
 ]
