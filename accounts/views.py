@@ -2,60 +2,73 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from .forms import RegisterForm
+from django.db import IntegrityError
+from complaints.models import Complaint
 
-# STEP 4: Set up the custom user model reference
 User = get_user_model()
 
+
+# register
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        role = request.POST.get('role')
 
-        if username and password:
-            User.objects.create_user(username=username, password=password)
-            messages.success(request, "Registered successfully!")
-            return redirect('login')
+        if not username or not password or not role:
+            messages.error(request, "All fields required")
+            return redirect('register')
+
+        try:
+            User.objects.create_user(
+                username=username,
+                password=password,
+                role=role
+            )
+        except IntegrityError:
+            messages.error(request, "Username already exists")
+            return redirect('register')
+
+        messages.success(request, "Registered successfully")
+        return redirect('login')
 
     return render(request, 'accounts/register.html')
 
 
+# login
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        role = request.POST.get('role')
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            if not user.role:
+                user.role = 'citizen'
+                user.save()
+
+            if user.role != role:
+                messages.error(request, f"Role mismatch. Your role is {user.role}")
+                return redirect('login')
+
             login(request, user)
             return redirect('dashboard')
+
         else:
             messages.error(request, "Invalid credentials")
 
     return render(request, 'accounts/login.html')
 
 
+# logout
 def logout_view(request):
     logout(request)
     return redirect('login')
 
 
-# TEMP DASHBOARDS
-def citizen_dashboard(request):
-    return render(request, 'accounts/dashboard.html')
-
-def worker_dashboard(request):
-    return HttpResponse("Worker Dashboard")
-
-def admin_dashboard(request):
-    return HttpResponse("Admin Dashboard")
-
-def about_view(request):
-    return render(request, 'accounts/about.html')
-
-from complaints.models import Complaint
-
+# dashboard
 def dashboard_view(request):
     total = Complaint.objects.count()
     pending = Complaint.objects.filter(status='Pending').count()
@@ -71,17 +84,61 @@ def dashboard_view(request):
 
     return render(request, 'accounts/dashboard.html', context)
 
+
+# home page
+def home_view(request):
+    total = Complaint.objects.count()
+    pending = Complaint.objects.filter(status='Pending').count()
+    in_progress = Complaint.objects.filter(status='In Progress').count()
+    resolved = Complaint.objects.filter(status='Resolved').count()
+
+    context = {
+        'total': total,
+        'pending': pending,
+        'in_progress': in_progress,
+        'resolved': resolved,
+    }
+
+    return render(request, 'accounts/home.html', context)
+
+
+# citizen dashboard
+def citizen_dashboard(request):
+    return render(request, 'accounts/dashboard.html')
+
+
+# worker dashboard
+def worker_dashboard(request):
+    return HttpResponse("Worker Dashboard")
+
+
+# admin dashboard
+def admin_dashboard(request):
+    return HttpResponse("Admin Dashboard")
+
+
+# about
+def about_view(request):
+    return render(request, 'accounts/about.html')
+
+
+# create superadmin
 def create_superadmin(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
 
         if username and password:
-            User.objects.create_user(
-                username=username,
-                password=password,
-                role='superadmin'
-            )
-            return redirect('login')
+            try:
+                User.objects.create_user(
+                    username=username,
+                    password=password,
+                    role='superadmin'
+                )
+                messages.success(request, "Superadmin created")
+                return redirect('login')
+            except IntegrityError:
+                messages.error(request, "Username exists")
+                return redirect('create_superadmin')
 
     return render(request, 'accounts/create_superadmin.html')

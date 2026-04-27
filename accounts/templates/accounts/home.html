@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container text-center mt-5">
+
+    <h1 class="display-4 fw-bold">A Smarter Way to Improve Your City</h1>
+    <p class="lead">Transparent, fast, and accountable civic complaint management</p>
+
+    <div class="mt-4">
+        <a href="/complaints/create/" class="btn btn-dark btn-lg me-2">Report a Problem</a>
+        <a href="/accounts/login/" class="btn btn-outline-dark btn-lg">Login</a>
+    </div>
+
+    <div class="mt-5">
+        <h3>{{ total }}+ Reports Resolved</h3>
+    </div>
+
+</div>
+
+<hr class="my-5">
+
+<div class="container text-center">
+    <h2 class="mb-4">How It Works</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <h4>1. Report</h4>
+            <p>Submit a complaint with details and location</p>
+        </div>
+
+        <div class="col-md-4">
+            <h4>2. Track</h4>
+            <p>Monitor status updates in real-time</p>
+        </div>
+
+        <div class="col-md-4">
+            <h4>3. Resolve</h4>
+            <p>Authorities fix the issue and close it</p>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="container text-center mb-5">
+    <h2>System Stats</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <h4>Total</h4>
+            <p>{{ total }}</p>
+        </div>
+        <div class="col-md-3">
+            <h4>Pending</h4>
+            <p>{{ pending }}</p>
+        </div>
+        <div class="col-md-3">
+            <h4>In Progress</h4>
+            <p>{{ in_progress }}</p>
+        </div>
+        <div class="col-md-3">
+            <h4>Resolved</h4>
+            <p>{{ resolved }}</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
