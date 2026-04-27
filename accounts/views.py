@@ -70,3 +70,18 @@ def dashboard_view(request):
     }
 
     return render(request, 'accounts/dashboard.html', context)
+
+def create_superadmin(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if username and password:
+            User.objects.create_user(
+                username=username,
+                password=password,
+                role='superadmin'
+            )
+            return redirect('login')
+
+    return render(request, 'accounts/create_superadmin.html')
