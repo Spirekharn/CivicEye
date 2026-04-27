@@ -15,6 +15,7 @@ def test_logout(driver, live_server):
 
     driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
+
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "logout"))
     )
@@ -24,5 +25,6 @@ def test_logout(driver, live_server):
     WebDriverWait(driver, 10).until(
         EC.url_contains("login")
     )
+
 
     assert "login" in driver.current_url
