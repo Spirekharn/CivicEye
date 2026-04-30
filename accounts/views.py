@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.db import IntegrityError
 from complaints.models import Complaint
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
 
@@ -40,27 +42,26 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        role = request.POST.get('role')
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            if not user.role:
-                user.role = 'citizen'
-                user.save()
-
-            if user.role != role:
-                messages.error(request, f"Role mismatch. Your role is {user.role}")
-                return redirect('login')
-
             login(request, user)
-            return redirect('dashboard')
+
+            # role-based redirect
+            if user.role == 'worker':
+                return redirect('worker_dashboard')
+            elif user.role == 'admin':
+                return redirect('dashboard')
+            elif user.role == 'superadmin':
+                return redirect('/admin/')  # eita django admin
+            else:
+                return redirect('dashboard')
 
         else:
             messages.error(request, "Invalid credentials")
 
     return render(request, 'accounts/login.html')
-
 
 # logout
 def logout_view(request):
@@ -108,8 +109,13 @@ def citizen_dashboard(request):
 
 
 # worker dashboard
+@login_required
 def worker_dashboard(request):
-    return HttpResponse("Worker Dashboard")
+    complaints = Complaint.objects.filter(assigned_to=request.user)
+
+    return render(request, 'accounts/worker_dashboard.html', {
+        'complaints': complaints
+    })
 
 
 # admin dashboard
@@ -141,4 +147,4 @@ def create_superadmin(request):
                 messages.error(request, "Username exists")
                 return redirect('create_superadmin')
 
-    return render(request, 'accounts/create_superadmin.html')
+    return render(request, 'accounts/superadmin.html')

@@ -2,6 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .models import Complaint
+from analytics.models import DuplicateComplaint
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
 
@@ -36,22 +40,45 @@ def create_complaint(request):
         description = request.POST.get('description')
         image = request.FILES.get('image')
 
+        location_text = request.POST.get('location_text')
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+
         if not title or not description:
             error = "Title and Description are required"
         else:
-            Complaint.objects.create(
+            # create complaint
+            complaint = Complaint.objects.create(
                 user=request.user,
                 title=title,
                 description=description,
                 image=image,
+                location_text=location_text,
+                latitude=latitude or None,
+                longitude=longitude or None,
                 status='Pending'
             )
+
+            # DUPLICATE DETECTION
+            recent_time = timezone.now() - timedelta(hours=1)
+
+            possible_duplicates = Complaint.objects.filter(
+                title__icontains=title,
+                location_text=location_text,
+                created_at__gte=recent_time
+            ).exclude(id=complaint.id)
+
+            for dup in possible_duplicates:
+                DuplicateComplaint.objects.create(
+                    original=dup,
+                    duplicate=complaint,
+                    similarity_score=0.9
+                )
 
             messages.success(request, "Complaint submitted successfully!")
             return redirect('/complaints/')
 
     return render(request, 'complaints/create.html', {'error': error})
-
 
 # assign complaint
 def assign_complaint(request, id):
@@ -74,3 +101,17 @@ def assign_complaint(request, id):
         'complaint': complaint,
         'users': users
     })
+
+@login_required
+def update_status(request, id, status):
+    complaint = get_object_or_404(Complaint, id=id)
+
+    # only worker/admin allowed
+    if request.user.role not in ['worker', 'admin', 'superadmin']:
+        return redirect('/')
+
+    complaint.status = status
+    complaint.save()
+
+    messages.success(request, f"Status updated to {status}")
+    return redirect('/complaints/')

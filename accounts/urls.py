@@ -15,4 +15,6 @@ urlpatterns = [
     path('create-superadmin/', views.create_superadmin, name='create_superadmin'),
     # about
     path('about/', views.about_view, name='about'),
+    #worker dashborad
+    path('worker/', views.worker_dashboard, name='worker_dashboard'),
 ]

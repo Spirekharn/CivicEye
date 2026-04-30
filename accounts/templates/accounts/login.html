@@ -16,14 +16,6 @@
         <form method="POST">
             {% csrf_token %}
 
-            <select name="role" class="form-control mb-3">
-                <option value="citizen">Citizen</option>
-                <option value="worker">Worker</option>
-                <option value="admin">Admin</option>
-                <option value="surveyor">Surveyor</option>
-                <option value="technician">Technician</option>
-                <option value="superadmin">Super Admin</option>
-            </select>
 
             <input class="form-control mb-3" type="text" name="username" placeholder="Username">
 
