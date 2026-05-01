@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:id>/', views.complaint_detail, name='complaint_detail'),
     path('assign/<int:id>/', views.assign_complaint, name='assign_complaint'),
     path('status/<int:id>/<str:status>/', views.update_status, name='update_status'),
+    path('assign/<int:id>/', views.assign_roles, name='assign_roles'),
+    path('approve/<int:id>/', views.approve_budget, name='approve_budget'),
 ]

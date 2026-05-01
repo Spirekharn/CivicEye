@@ -6,6 +6,8 @@ from analytics.models import DuplicateComplaint
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
+from departments.models import Department, Expense
+from assignments.models import SurveyReport
 
 User = get_user_model()
 
@@ -114,4 +116,67 @@ def update_status(request, id, status):
     complaint.save()
 
     messages.success(request, f"Status updated to {status}")
+    return redirect('/complaints/')
+
+@login_required
+def assign_roles(request, id):
+    complaint = get_object_or_404(Complaint, id=id)
+
+    if request.user.role not in ['admin', 'superadmin']:
+        return redirect('/')
+
+    surveyors = User.objects.filter(role='surveyor')
+    workers = User.objects.filter(role='worker')
+
+    if request.method == 'POST':
+        surveyor_id = request.POST.get('surveyor')
+        worker_id = request.POST.get('worker')
+
+        if surveyor_id:
+            complaint.assigned_to_id = surveyor_id
+            complaint.status = 'Assigned'
+            complaint.save()
+
+        if worker_id:
+            complaint.assigned_to_id = worker_id
+            complaint.status = 'In Progress'
+            complaint.save()
+
+        messages.success(request, "Roles assigned successfully")
+        return redirect('/complaints/')
+
+    return render(request, 'complaints/assign_roles.html', {
+        'complaint': complaint,
+        'surveyors': surveyors,
+        'workers': workers
+    })
+
+@login_required
+def approve_budget(request, id):
+    complaint = get_object_or_404(Complaint, id=id)
+
+    if request.user.role not in ['admin', 'superadmin']:
+        return redirect('/')
+
+    report = SurveyReport.objects.filter(complaint=complaint).first()
+
+    if report:
+        dept = Department.objects.first()  # simple mapping for demo
+
+        if dept and dept.remaining_budget >= report.estimated_cost:
+            dept.remaining_budget -= report.estimated_cost
+            dept.save()
+
+            Expense.objects.create(
+                department=dept,
+                complaint_id=complaint.id,
+                amount=report.estimated_cost,
+                description="Approved complaint expense"
+            )
+
+            complaint.status = 'In Progress'
+            complaint.save()
+
+            messages.success(request, "Budget approved and deducted")
+
     return redirect('/complaints/')

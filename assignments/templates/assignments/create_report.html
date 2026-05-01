@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h3>Survey Report</h3>
+
+    <p><strong>Complaint:</strong> {{ complaint.title }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <textarea name="report" class="form-control mb-3" placeholder="Write your inspection report"></textarea>
+
+        <input type="number" name="cost" class="form-control mb-3" placeholder="Estimated Cost">
+
+        <button class="btn btn-dark w-100">Submit Report</button>
+    </form>
+</div>
+
+{% endblock %}
