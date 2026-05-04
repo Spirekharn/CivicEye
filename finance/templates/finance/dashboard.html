@@ -1,0 +1,63 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Finance Dashboard{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div><h1>Finance Dashboard</h1><p class="sub">FY {{ fiscal_year }}</p></div>
+  <a href="{% url 'allocate_budget' %}" class="btn btn-pr">+ Allocate Budget</a>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-l">Total Allocated</div><div class="stat-v mono">৳{{ total_budget|floatformat:0 }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Total Spent</div><div class="stat-v mono">৳{{ total_spent|floatformat:0 }}</div></div>
+  <div class="stat stat-green"><div class="stat-l">Remaining</div><div class="stat-v mono">৳{{ total_remaining|floatformat:0 }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Pending Approvals</div><div class="stat-v">{{ pending_expenses.count }}</div></div>
+</div>
+
+{% if pending_expenses %}
+<div class="card mb2 card-amber">
+  <h4 class="mb2">Pending Budget Approvals</h4>
+  {% for exp in pending_expenses %}
+  <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--bdr)">
+    <div style="flex:1">
+      <div class="semi sm">{{ exp.title|truncatechars:60 }}</div>
+      <div class="flex-c gap-2 mt1">
+        <span class="xs muted">{{ exp.department.name }}</span>
+        <span class="xs mono bold text-o">৳{{ exp.amount|floatformat:0 }}</span>
+        {% if exp.complaint %}<a href="{% url 'complaint_detail' exp.complaint.pk %}" class="xs text-pr">View complaint</a>{% endif %}
+      </div>
+    </div>
+    <div class="flex-c gap-1">
+      <a href="{% url 'approve_expense' exp.pk %}?action=approve" class="btn btn-green btn-sm">Approve</a>
+      <a href="{% url 'approve_expense' exp.pk %}?action=reject" class="btn btn-red btn-sm">Reject</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h4 class="mb2">Department Budget Utilisation</h4>
+  {% for dept in dept_budgets %}
+  <div style="padding:1rem 0;border-bottom:1px solid var(--bdr)">
+    <div class="flex-b mb1">
+      <div>
+        <div class="semi sm">{{ dept.dept.name }}</div>
+        <div class="xs muted mono">{{ dept.dept.city_corp }}</div>
+      </div>
+      <div class="tr">
+        <div class="xs mono bold">৳{{ dept.allocated|floatformat:0 }}</div>
+        <div class="xs muted mono">allocated</div>
+      </div>
+    </div>
+    <div class="brow">
+      <span>Spent: ৳{{ dept.spent|floatformat:0 }}</span>
+      <span>Remaining: ৳{{ dept.remaining|floatformat:0 }}</span>
+    </div>
+    <div class="btrack">
+      <div class="bfill {% if dept.pct > 85 %}crit{% elif dept.pct > 65 %}warn{% endif %}" style="width:{{ dept.pct }}%"></div>
+    </div>
+    <div class="xs muted mono mt1">{{ dept.pct|floatformat:0 }}% utilised</div>
+  </div>
+  {% empty %}<p class="sm muted tc" style="padding:2rem">No budgets allocated yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

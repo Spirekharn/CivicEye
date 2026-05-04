@@ -1,0 +1,190 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+{% if role_view == 'citizen' %}
+<div class="pg-hdr">
+  <div>
+    <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+    <p class="sub">Track your complaints and report new issues</p>
+  </div>
+  <div class="pg-actions">
+    <a href="{% url 'complaint_create' %}" class="btn btn-pr">+ Report Issue</a>
+  </div>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-i">📋</div><div class="stat-l">Total Reported</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-green"><div class="stat-i">✓</div><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⚙</div><div class="stat-l">In Progress</div><div class="stat-v">{{ in_progress }}</div></div>
+  <div class="stat"><div class="stat-i">⏳</div><div class="stat-l">Pending</div><div class="stat-v">{{ pending }}</div></div>
+</div>
+<div class="card">
+  <div class="flex-b mb2"><h3>My Reports</h3><a href="{% url 'complaint_list' %}" class="btn btn-outline btn-sm">View all</a></div>
+  {% if complaints %}
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">{% if c.category == 'roads' %}🛣️{% elif c.category == 'water' %}💧{% elif c.category == 'electricity' %}⚡{% elif c.category == 'sanitation' %}🗑️{% elif c.category == 'parks' %}🌳{% elif c.category == 'health' %}🏥{% elif c.category == 'building' %}🏗️{% elif c.category == 'transport' %}🚌{% elif c.category == 'environment' %}🌊{% elif c.category == 'fire' %}🚒{% elif c.category == 'it' %}💻{% else %}🏛️{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b">
+        <div class="semi sm trunc">{{ c.title }}</div>
+        <span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span>
+      </div>
+      <div class="cc-meta">
+        <span class="badge b-{{ c.priority }}">{{ c.priority }}</span>
+        <span class="xs muted">{{ c.city_corp }}</span>
+        <span class="xs muted">{{ c.created_at|timesince }} ago</span>
+      </div>
+      {% with c.get_status_progress as pct %}
+      <div class="prog mt2" style="margin-top:.55rem">
+        <div class="prog-fill {% if pct < 50 %}amber{% elif pct == 100 %}{% else %}{% endif %}" style="width:{{ pct }}%"></div>
+      </div>
+      {% endwith %}
+    </div>
+  </a>
+  {% endfor %}
+  {% else %}
+  <div class="empty">
+    <div class="empty-ico">📭</div>
+    <h3>No complaints yet</h3>
+    <p class="sm mt1">Report your first civic issue to get started.</p>
+    <a href="{% url 'complaint_create' %}" class="btn btn-pr mt2">Report an Issue</a>
+  </div>
+  {% endif %}
+</div>
+
+{% elif role_view == 'surveyor' %}
+<div class="pg-hdr">
+  <div><h1>Surveyor Dashboard</h1><p class="sub">{{ user.department.name|default:'No Department' }}</p></div>
+  <a href="{% url 'surveyor_queue' %}" class="btn btn-pr">View Queue</a>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-i">📋</div><div class="stat-l">Total Assigned</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">🔍</div><div class="stat-l">Pending Inspection</div><div class="stat-v">{{ pending }}</div></div>
+  <div class="stat stat-green"><div class="stat-i">✓</div><div class="stat-l">Surveys Done</div><div class="stat-v">{{ done }}</div></div>
+</div>
+<div class="card">
+  <div class="flex-b mb2"><h3>Assigned Complaints</h3><a href="{% url 'surveyor_queue' %}" class="btn btn-outline btn-sm">Full queue</a></div>
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">🔍</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b"><div class="semi sm trunc">{{ c.title }}</div><span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span></div>
+      <div class="cc-meta"><span class="badge b-{{ c.priority }}">{{ c.priority }}</span><span class="xs muted">{{ c.location_text|truncatechars:40 }}</span></div>
+    </div>
+  </a>
+  {% empty %}<div class="empty"><div class="empty-ico">✓</div><h3>Queue is clear</h3><p class="sm mt1">No pending surveys at this time.</p></div>
+  {% endfor %}
+</div>
+
+{% elif role_view == 'worker' or role_view == 'technician' %}
+<div class="pg-hdr">
+  <div><h1>{{ task_label }}</h1><p class="sub">{{ user.department.name|default:'No Department' }}</p></div>
+  <a href="{% url 'worker_tasks' %}" class="btn btn-pr">View All Tasks</a>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-i">📋</div><div class="stat-l">Total Tasks</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⚙</div><div class="stat-l">In Progress</div><div class="stat-v">{{ in_progress }}</div></div>
+  <div class="stat stat-green"><div class="stat-i">✓</div><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved }}</div></div>
+</div>
+<div class="card">
+  <div class="flex-b mb2"><h3>My Tasks</h3></div>
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">{% if role_view == 'technician' %}⚡{% else %}🔧{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b"><div class="semi sm trunc">{{ c.title }}</div><span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span></div>
+      <div class="cc-meta"><span class="badge b-{{ c.priority }}">{{ c.priority }}</span><span class="xs muted">{{ c.city_corp }}</span></div>
+    </div>
+  </a>
+  {% empty %}<div class="empty"><div class="empty-ico">✓</div><h3>No active tasks</h3></div>
+  {% endfor %}
+</div>
+
+{% elif role_view == 'admin' %}
+<div class="pg-hdr">
+  <div><h1>{{ dept.name }}</h1><p class="sub">Department Dashboard &middot; {{ dept.city_corp }}</p></div>
+  <div class="pg-actions">
+    <a href="{% url 'admin_complaints' %}" class="btn btn-outline">All Complaints</a>
+    <a href="{% url 'finance_dashboard' %}" class="btn btn-pr">Finance</a>
+  </div>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-i">📋</div><div class="stat-l">Total</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⏳</div><div class="stat-l">Pending Action</div><div class="stat-v">{{ pending }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⚙</div><div class="stat-l">In Progress</div><div class="stat-v">{{ in_progress }}</div></div>
+  <div class="stat stat-green"><div class="stat-i">✓</div><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved }}</div></div>
+</div>
+<div class="card">
+  <div class="flex-b mb2"><h3>Recent Complaints</h3><a href="{% url 'admin_complaints' %}" class="btn btn-outline btn-sm">Manage all</a></div>
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">{% if c.category == 'roads' %}🛣️{% elif c.category == 'water' %}💧{% elif c.category == 'electricity' %}⚡{% else %}🏛️{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b"><div class="semi sm trunc">{{ c.title }}</div><span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span></div>
+      <div class="cc-meta"><span class="badge b-{{ c.priority }}">{{ c.priority }}</span><span class="xs muted">{{ c.location_text|truncatechars:40 }}</span><span class="xs muted">{{ c.created_at|timesince }} ago</span></div>
+    </div>
+  </a>
+  {% empty %}<div class="empty"><div class="empty-ico">✓</div><h3>No complaints yet</h3></div>
+  {% endfor %}
+</div>
+
+{% elif role_view == 'super_admin' %}
+<div class="pg-hdr">
+  <div><h1>System Overview</h1><p class="sub">Super Admin &mdash; All city corporations</p></div>
+  <div class="pg-actions">
+    <a href="{% url 'superadmin_dashboard' %}" class="btn btn-amber">Super Admin Panel</a>
+    <a href="/admin/" class="btn btn-outline">Django Admin</a>
+  </div>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-i">📋</div><div class="stat-l">Total Complaints</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⏳</div><div class="stat-l">Pending</div><div class="stat-v">{{ pending }}</div></div>
+  <div class="stat stat-amber"><div class="stat-i">⚙</div><div class="stat-l">In Progress</div><div class="stat-v">{{ in_progress }}</div></div>
+  <div class="stat stat-green"><div class="stat-i">✓</div><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved }}</div></div>
+  <div class="stat"><div class="stat-i">🏛️</div><div class="stat-l">Departments</div><div class="stat-v">{{ dept_count }}</div></div>
+  <div class="stat"><div class="stat-i">👥</div><div class="stat-l">Total Users</div><div class="stat-v">{{ user_count }}</div></div>
+</div>
+{% if cat_data %}
+<div class="card mb2">
+  <h3 class="mb2">Complaints by Category</h3>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Category</th><th>Count</th><th>Share</th></tr></thead>
+      <tbody>
+      {% for row in cat_data %}
+      <tr>
+        <td class="semi">{{ row.category|capfirst }}</td>
+        <td class="mono">{{ row.c }}</td>
+        <td style="min-width:120px">
+          <div class="prog" style="height:6px"><div class="prog-fill" style="width:{% if total %}{% widthratio row.c total 100 %}{% else %}0{% endif %}%"></div></div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<div class="card">
+  <div class="flex-b mb2"><h3>Recent Complaints (All Corps)</h3><a href="{% url 'admin_complaints' %}" class="btn btn-outline btn-sm">Manage all</a></div>
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">{% if c.category == 'roads' %}🛣️{% elif c.category == 'water' %}💧{% elif c.category == 'electricity' %}⚡{% else %}🏛️{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b"><div class="semi sm trunc">{{ c.title }}</div><span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span></div>
+      <div class="cc-meta"><span class="badge b-{{ c.priority }}">{{ c.priority }}</span><span class="xs muted">{{ c.city_corp }}</span><span class="xs muted">{{ c.created_at|timesince }} ago</span></div>
+    </div>
+  </a>
+  {% empty %}<div class="empty"><div class="empty-ico">📭</div><h3>No complaints yet</h3></div>
+  {% endfor %}
+</div>
+
+{% elif role_view == 'admin_no_dept' %}
+<div class="card" style="max-width:500px;margin:3rem auto;text-align:center;padding:2.5rem">
+  <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+  <h3>No Department Assigned</h3>
+  <p class="sm mt2 muted">Your account has the Admin role but hasn't been assigned to a department yet. Please contact your Super Admin.</p>
+</div>
+{% endif %}
+
+{% endblock %}

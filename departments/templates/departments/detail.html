@@ -1,0 +1,40 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}{{ department.name }}{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <div class="flex-c gap-1 mb1"><a href="{% url 'department_list' %}" class="xs muted">&larr; Departments</a></div>
+    <h1>{{ department.name }}</h1>
+    <div class="flex-c gap-1 mt1">
+      <span class="badge b-teal">{{ department.city_corp }}</span>
+      <span class="badge b-brass">{{ department.slug }}</span>
+      {% if department.is_active %}<span class="badge b-green">Active</span>{% endif %}
+    </div>
+  </div>
+</div>
+<div class="g2" style="align-items:start">
+  <div class="card">
+    <h4 class="mb2">Department Info</h4>
+    {% if department.description %}<p class="sm mb2">{{ department.description }}</p>{% endif %}
+    {% if department.contact_email %}<p class="sm"><strong>Contact:</strong> <a href="mailto:{{ department.contact_email }}">{{ department.contact_email }}</a></p>{% endif %}
+    <div class="hr"></div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr);gap:.7rem;margin:0">
+      <div class="stat"><div class="stat-l">Total Staff</div><div class="stat-v">{{ staff.count }}</div></div>
+      <div class="stat"><div class="stat-l">Complaints</div><div class="stat-v">{{ complaint_count }}</div></div>
+      <div class="stat stat-green"><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved_count }}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h4 class="mb2">Staff Members</h4>
+    {% for member in staff %}
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--bdr)">
+      <div class="avatar xs">{{ member.first_name|first|upper }}{{ member.last_name|first|upper }}</div>
+      <div>
+        <div class="sm semi">{{ member.get_full_name|default:member.username }}</div>
+        <div class="xs muted">{{ member.get_role_display }}</div>
+      </div>
+    </div>
+    {% empty %}<p class="xs muted">No staff registered.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

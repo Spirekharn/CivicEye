@@ -1,0 +1,26 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<div class="pg-hdr"><div><h1>Departments</h1><p class="sub">{{ departments.count }} active departments across {{ corps|length }} city corporations</p></div></div>
+{% regroup departments by city_corp as corp_groups %}
+{% for corp in corp_groups %}
+<div class="mb3">
+  <h4 class="mb2" style="display:flex;align-items:center;gap:.7rem">
+    <span class="badge b-teal">{{ corp.grouper }}</span>
+    <span class="muted sm">{{ corp.list|length }} departments</span>
+  </h4>
+  <div class="gauto stagger">
+    {% for d in corp.list %}
+    <a href="{% url 'department_detail' d.pk %}" class="card card-lift" style="text-decoration:none;color:inherit">
+      <div class="flex-b mb1">
+        <h5>{{ d.name }}</h5>
+        {% if d.is_active %}<span class="badge b-green">Active</span>{% else %}<span class="badge b-rejected">Inactive</span>{% endif %}
+      </div>
+      <p class="xs muted">{{ d.description|default:'No description'|truncatechars:80 }}</p>
+      {% if d.contact_email %}<p class="xs muted mono mt1">{{ d.contact_email }}</p>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% empty %}<div class="empty"><div class="empty-ico">🏛️</div><h3>No departments</h3></div>{% endfor %}
+{% endblock %}

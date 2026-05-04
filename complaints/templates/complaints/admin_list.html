@@ -1,0 +1,73 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}All Complaints{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div><h1>All Complaints</h1><p class="sub">{{ total }} total &mdash; {{ pending }} pending &mdash; {{ in_progress }} in progress &mdash; {{ resolved }} resolved</p></div>
+  <div class="pg-actions">
+    <a href="{% url 'complaint_create' %}" class="btn btn-outline">+ New</a>
+  </div>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-l">Total</div><div class="stat-v">{{ total }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Pending Action</div><div class="stat-v">{{ pending }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">In Progress</div><div class="stat-v">{{ in_progress }}</div></div>
+  <div class="stat stat-green"><div class="stat-l">Resolved</div><div class="stat-v">{{ resolved }}</div></div>
+</div>
+<div class="card mb2">
+  <form method="get" style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end">
+    <div style="flex:1;min-width:180px"><label class="label">Search</label><input class="input" name="q" value="{{ request.GET.q }}" placeholder="Title, location, citizen..."></div>
+    <div style="min-width:140px"><label class="label">Status</label>
+      <select class="select" name="status">
+        <option value="">All</option>
+        {% for v,l in status_choices %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div style="min-width:140px"><label class="label">Category</label>
+      <select class="select" name="category">
+        <option value="">All</option>
+        {% for v,l in category_choices %}<option value="{{ v }}" {% if request.GET.category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div style="min-width:110px"><label class="label">Priority</label>
+      <select class="select" name="priority">
+        <option value="">All</option>
+        <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+        <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+        <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-pr">Filter</button>
+    {% if request.GET.q or request.GET.status or request.GET.category or request.GET.priority %}<a href="{% url 'admin_complaints' %}" class="btn btn-outline">Clear</a>{% endif %}
+  </form>
+</div>
+<div class="card">
+  {% if complaints %}
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Priority</th><th>Location</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for c in complaints %}
+      <tr>
+        <td class="mono muted xs">{{ c.pk }}</td>
+        <td><a href="{% url 'complaint_detail' c.pk %}" class="semi text-pr">{{ c.title|truncatechars:45 }}</a></td>
+        <td class="xs">{{ c.get_category_display }}</td>
+        <td><span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span></td>
+        <td><span class="badge b-{{ c.priority }}">{{ c.priority }}</span></td>
+        <td class="xs muted">{{ c.location_text|truncatechars:30 }}</td>
+        <td class="xs mono muted">{{ c.created_at|date:"d M Y" }}</td>
+        <td style="white-space:nowrap">
+          <a href="{% url 'complaint_detail' c.pk %}" class="btn btn-outline btn-sm">View</a>
+          {% if c.status == 'submitted' or c.status == 'under_review' %}<a href="{% url 'assign_complaint' c.pk %}" class="btn btn-amber btn-sm">Assign</a>{% endif %}
+          {% if c.status == 'budget_approved' %}<a href="{% url 'assign_worker' c.pk %}" class="btn btn-pr btn-sm">Worker</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><div class="empty-ico">📭</div><h3>No complaints found</h3></div>
+  {% endif %}
+</div>
+{% endblock %}

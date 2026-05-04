@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ user.theme|default:'light' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="CivicEye — Bangladesh's transparent civic complaint management platform">
+<title>{% block title %}CivicEye{% endblock %} — Bangladesh City Corporation Portal</title>
+{% load static %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="{% static 'accounts/css/civiceye.css' %}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231e5631'/><text y='23' x='4' font-size='20'>🏛</text></svg>">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if messages %}
+<div class="toasts" role="alert" aria-live="polite">
+{% for msg in messages %}
+<div class="toast {% if msg.tags == 'error' %}error{% elif msg.tags == 'warning' %}warning{% elif msg.tags == 'success' %}success{% else %}info{% endif %}">
+  <span class="toast-icon">{% if msg.tags == 'success' %}✓{% elif msg.tags == 'error' %}✕{% elif msg.tags == 'warning' %}⚠{% else %}ℹ{% endif %}</span>
+  <span>{{ msg }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="{% url 'home' %}" class="nav-brand">
+    <em>Civic</em><strong>Eye</strong>
+    <span class="nav-badge">BD Portal</span>
+  </a>
+
+  <div class="nav-links">
+    <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Home</a>
+    <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>About</a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+    <a href="{% url 'complaint_list' %}" {% if 'complaint' in request.resolver_match.url_name %}class="active"{% endif %}>Complaints</a>
+    {% if user.role == 'admin' or user.role == 'super_admin' %}
+    <a href="{% url 'finance_dashboard' %}" {% if 'finance' in request.resolver_match.url_name %}class="active"{% endif %}>Finance</a>
+    <a href="{% url 'department_list' %}" {% if 'department' in request.resolver_match.url_name %}class="active"{% endif %}>Departments</a>
+    {% endif %}
+    {% if user.role == 'super_admin' %}
+    <a href="{% url 'superadmin_dashboard' %}" {% if request.resolver_match.url_name == 'superadmin_dashboard' %}class="active"{% endif %}>Super Admin</a>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="nav-actions">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'profile' %}" style="margin:0;display:contents">
+      {% csrf_token %}
+      <input type="hidden" name="theme_only" value="1">
+      <input type="hidden" name="theme" value="{% if user.theme == 'dark' %}light{% else %}dark{% endif %}">
+      <button type="submit" class="icon-btn" title="Toggle {{ user.theme|default:'light'|yesno:'light,dark' }} mode" aria-label="Toggle theme">
+        {% if user.theme == 'dark' %}☀{% else %}◑{% endif %}
+      </button>
+    </form>
+    <a href="{% url 'notification_list' %}" class="icon-btn" style="position:relative" title="Notifications">
+      🔔
+      {% if unread_notif_count > 0 %}<span class="notif-dot">{{ unread_notif_count }}</span>{% endif %}
+    </a>
+    <a href="{% url 'profile' %}" class="avatar" title="{{ user.get_full_name|default:user.username }}">
+      {% if user.profile_picture %}<img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+      {% else %}{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}{% endif %}
+    </a>
+    <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Sign out</a>
+    {% else %}
+    <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Sign in</a>
+    <a href="{% url 'register' %}" class="btn btn-pr btn-sm">Get started</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% block full_content %}
+<main role="main">{% block content %}{% endblock %}</main>
+{% endblock %}
+
+<footer class="footer" role="contentinfo">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand"><em>Civic</em><strong>Eye</strong></div>
+      <p class="footer-desc">Bangladesh's transparent civic complaint management platform — connecting citizens with 10 city corporations and 12 service departments across the country.</p>
+    </div>
+    <div class="footer-col">
+      <h6>Platform</h6>
+      <a href="{% url 'register' %}">Create Account</a>
+      <a href="{% url 'login' %}">Sign In</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'department_list' %}">Departments</a>
+    </div>
+    <div class="footer-col">
+      <h6>Citizens</h6>
+      <a href="{% url 'complaint_create' %}">Report an Issue</a>
+      <a href="{% url 'complaint_list' %}">Track Complaints</a>
+      <a href="{% url 'notification_list' %}">Notifications</a>
+    </div>
+    <div class="footer-col">
+      <h6>Project</h6>
+      <a href="{% url 'about' %}">The Team</a>
+      <a href="#">UAP CSE 314</a>
+      <a href="#">Group 02 · Section C-1</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 CivicEye — University of Asia Pacific · CSE 314 · Group 02</span>
+    <span>Supervised by Tanjina Helaly, Assistant Professor, CSE, UAP</span>
+  </div>
+</footer>
+</body>
+</html>

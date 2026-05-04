@@ -1,0 +1,293 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}{{ c.title|truncatechars:40 }}{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <div class="flex-c gap-1 mb1">
+      <a href="{% url 'complaint_list' %}" class="xs muted">&larr; Back to complaints</a>
+      <span class="xs muted">/</span>
+      <span class="xs muted mono">#{{ c.pk }}</span>
+    </div>
+    <h1 style="font-size:1.5rem">{{ c.title }}</h1>
+    <div class="flex-c gap-1 mt1">
+      <span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span>
+      <span class="badge b-{{ c.priority }}">{{ c.priority }}</span>
+      <span class="badge b-teal">{{ c.city_corp }}</span>
+      <span class="xs muted">{{ c.created_at|date:"d M Y, g:i A" }}</span>
+    </div>
+  </div>
+  <div class="pg-actions">
+    {% if user.role == 'admin' or user.role == 'super_admin' %}
+    {% if c.status == 'submitted' or c.status == 'under_review' %}
+    <a href="{% url 'assign_complaint' c.pk %}" class="btn btn-amber">Assign Surveyor</a>
+    {% endif %}
+    {% if c.status == 'budget_approved' %}
+    <a href="{% url 'assign_worker' c.pk %}" class="btn btn-pr">Assign Worker</a>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Progress strip -->
+<div class="card mb2" style="padding:1.2rem 1.5rem">
+  <div class="flex-b mb2">
+    <span class="xs muted bold mono">PROGRESS</span>
+    <span class="xs muted mono">{{ progress }}%</span>
+  </div>
+  <div class="prog" style="height:8px">
+    <div class="prog-fill {% if progress < 40 %}amber{% elif progress == 100 %}{% endif %}" style="width:{{ progress }}%"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-top:.75rem">
+    <div class="xxs mono tc muted">Submit</div>
+    <div class="xxs mono tc muted">Review</div>
+    <div class="xxs mono tc muted">Survey</div>
+    <div class="xxs mono tc muted">Budget</div>
+    <div class="xxs mono tc muted">Assign</div>
+    <div class="xxs mono tc muted">Work</div>
+    <div class="xxs mono tc muted">Resolve</div>
+    <div class="xxs mono tc muted">Close</div>
+  </div>
+</div>
+
+<div class="g2" style="align-items:start;gap:1.8rem">
+  <div>
+    <!-- Detail Card -->
+    <div class="card mb2">
+      <h4 class="mb2">Complaint Details</h4>
+      <p style="line-height:1.8;margin-bottom:1.2rem">{{ c.description }}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+        <div><div class="xxs muted bold mono mb1">CATEGORY</div><div class="sm semi">{{ c.get_category_display }}</div></div>
+        <div><div class="xxs muted bold mono mb1">CITY CORP</div><div class="sm semi">{{ c.city_corp }}</div></div>
+        <div><div class="xxs muted bold mono mb1">DEPARTMENT</div><div class="sm semi">{{ c.department.name|default:'Unassigned' }}</div></div>
+        <div><div class="xxs muted bold mono mb1">PRIORITY</div><span class="badge b-{{ c.priority }}">{{ c.priority }}</span></div>
+        <div><div class="xxs muted bold mono mb1">LOCATION</div><div class="sm">{{ c.location_text }}</div></div>
+        {% if c.latitude and c.longitude %}
+        <div><div class="xxs muted bold mono mb1">COORDINATES</div><div class="xs mono muted">{{ c.latitude }}, {{ c.longitude }}</div></div>
+        {% endif %}
+        <div><div class="xxs muted bold mono mb1">REPORTED BY</div>
+          <div class="sm">{% if c.is_anonymous %}Anonymous{% else %}{{ c.citizen.get_full_name|default:c.citizen.username }}{% endif %}</div>
+        </div>
+        <div><div class="xxs muted bold mono mb1">SUBMITTED</div><div class="sm mono">{{ c.created_at|date:"d M Y" }}</div></div>
+        {% if c.assigned_surveyor %}
+        <div><div class="xxs muted bold mono mb1">SURVEYOR</div><div class="sm">{{ c.assigned_surveyor.get_full_name }}</div></div>
+        {% endif %}
+        {% if c.assigned_worker %}
+        <div><div class="xxs muted bold mono mb1">ASSIGNED TO</div><div class="sm">{{ c.assigned_worker.get_full_name }} <span class="badge b-brass">{{ c.assigned_worker.get_role_display }}</span></div></div>
+        {% endif %}
+      </div>
+      {% if c.image %}
+      <div class="mt2"><div class="xxs muted bold mono mb1">EVIDENCE PHOTO</div>
+        <img src="{{ c.image.url }}" alt="Evidence" style="max-width:100%;border-radius:var(--radius-sm);border:1px solid var(--bdr)">
+      </div>
+      {% endif %}
+      {% if c.resolution_notes %}
+      <div class="mt2 alert info"><div><div class="xs bold mb1">Resolution Notes</div><p class="sm" style="color:inherit">{{ c.resolution_notes }}</p></div></div>
+      {% endif %}
+      {% if c.completion_image %}
+      <div class="mt2"><div class="xxs muted bold mono mb1">COMPLETION PHOTO</div>
+        <img src="{{ c.completion_image.url }}" alt="Completion" style="max-width:100%;border-radius:var(--radius-sm);border:1px solid var(--bdr)">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Survey Report -->
+    {% if survey %}
+    <div class="card mb2 card-green">
+      <h4 class="mb2">Survey Report</h4>
+      <p class="sm mb2" style="line-height:1.8">{{ survey.findings }}</p>
+      {% if survey.materials_needed %}
+      <p class="sm mb2"><strong>Materials needed:</strong> {{ survey.materials_needed }}</p>
+      {% endif %}
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1rem">
+        <div class="card card-flat tc" style="padding:.8rem"><div class="xxs muted mono mb1">LABOUR</div><div class="semi mono">BDT {{ survey.labor_estimate|floatformat:0 }}</div></div>
+        <div class="card card-flat tc" style="padding:.8rem"><div class="xxs muted mono mb1">EQUIPMENT</div><div class="semi mono">BDT {{ survey.equipment_estimate|floatformat:0 }}</div></div>
+        <div class="card card-flat tc" style="padding:.8rem"><div class="xxs muted mono mb1">MISC</div><div class="semi mono">BDT {{ survey.misc_estimate|floatformat:0 }}</div></div>
+      </div>
+      <div class="flex-b" style="padding:.9rem 1rem;background:var(--pr-l);border-radius:var(--radius-sm);border:1px solid var(--pr)">
+        <span class="sm semi text-pr">Total Estimate</span>
+        <span class="bold mono text-pr" style="font-size:1.1rem">BDT {{ survey.estimated_cost|floatformat:0 }}</span>
+      </div>
+      <div class="flex-c gap-2 mt2">
+        <div class="xs muted">Est. days: <span class="semi">{{ survey.estimated_days }}</span></div>
+        <div class="xs muted">Priority rec: <span class="badge b-{{ survey.priority_recommendation }}">{{ survey.priority_recommendation }}</span></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Expense -->
+    {% if expense %}
+    <div class="card mb2 {% if expense.status == 'approved' %}card-green{% elif expense.status == 'rejected' %}card-red{% else %}card-amber{% endif %}">
+      <div class="flex-b mb1">
+        <h4>Budget &amp; Expense</h4>
+        <span class="badge {% if expense.status == 'approved' %}b-resolved{% elif expense.status == 'rejected' %}b-rejected{% else %}b-budget_pending{% endif %}">{{ expense.status }}</span>
+      </div>
+      <div class="flex-b">
+        <span class="sm muted">Amount</span>
+        <span class="bold mono">BDT {{ expense.amount|floatformat:0 }}</span>
+      </div>
+      <div class="flex-b mt1">
+        <span class="sm muted">Fiscal Year</span>
+        <span class="xs mono">{{ expense.fiscal_year }}</span>
+      </div>
+      {% if expense.rejection_reason %}
+      <div class="alert danger mt2"><p class="sm" style="color:inherit">{{ expense.rejection_reason }}</p></div>
+      {% endif %}
+      {% if user.role == 'admin' or user.role == 'super_admin' %}
+      {% if expense.status == 'pending' %}
+      <div class="mt2 flex-c gap-1">
+        <a href="{% url 'approve_expense' expense.pk %}?action=approve" class="btn btn-green btn-sm">Approve Budget</a>
+        <a href="{% url 'approve_expense' expense.pk %}?action=reject" class="btn btn-red btn-sm">Reject</a>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Worker status update -->
+    {% if user.role == 'worker' or user.role == 'technician' %}
+    {% if c.assigned_worker == user and c.status == 'worker_assigned' or c.assigned_worker == user and c.status == 'in_progress' %}
+    <div class="card mb2 card-amber">
+      <h4 class="mb2">Update Task Status</h4>
+      <form method="post" action="{% url 'update_status' c.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="fg">
+          <label class="label">New Status</label>
+          <select class="select" name="status" required>
+            {% if c.status == 'worker_assigned' %}<option value="in_progress">Mark In Progress</option>{% endif %}
+            {% if c.status == 'in_progress' %}<option value="resolved">Mark Resolved</option>{% endif %}
+          </select>
+        </div>
+        <div class="fg">
+          <label class="label">Notes</label>
+          <textarea class="textarea" name="notes" rows="3" placeholder="Add completion notes..."></textarea>
+        </div>
+        <div class="fg">
+          <label class="label">Completion Photo (optional)</label>
+          <input class="input" type="file" name="completion_image" accept="image/*" style="padding:.5rem">
+        </div>
+        <button type="submit" class="btn btn-pr btn-full">Update Status</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Citizen Feedback -->
+    {% if user.role == 'citizen' and c.citizen == user and c.status == 'resolved' or user.role == 'citizen' and c.citizen == user and c.status == 'closed' %}
+    {% if not feedback %}
+    <div class="card mb2 card-green">
+      <h4 class="mb2">Rate this Resolution</h4>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="feedback">
+        <div class="fg">
+          <label class="label">Rating</label>
+          <select class="select" name="rating">
+            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+            <option value="4">⭐⭐⭐⭐ Good</option>
+            <option value="3" selected>⭐⭐⭐ Average</option>
+            <option value="2">⭐⭐ Poor</option>
+            <option value="1">⭐ Very Poor</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="label">Comment (optional)</label>
+          <textarea class="textarea" name="comment" rows="3" placeholder="Share your experience..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-pr btn-full">Submit Feedback</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="card mb2 card-green">
+      <h4 class="mb1">Your Feedback</h4>
+      <div class="flex-c gap-1 mb1">
+        {% for i in '12345'|make_list %}
+        <span style="color:{% if forloop.counter <= feedback.rating %}var(--br){% else %}var(--bdr){% endif %}">★</span>
+        {% endfor %}
+        <span class="xs muted">({{ feedback.rating }}/5)</span>
+      </div>
+      {% if feedback.comment %}<p class="sm italic">"{{ feedback.comment }}"</p>{% endif %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if user.role == 'admin' or user.role == 'super_admin' %}
+    <div class="card mb2">
+      <h4 class="mb2">Department Assignment</h4>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="department">
+        <div class="form-row">
+          <div class="fg">
+            <label class="label">Department</label>
+            {% if user.role == 'admin' and user.department %}
+            <input class="input" value="{{ user.department.name }}" disabled>
+            <input type="hidden" name="department" value="{{ user.department.pk }}">
+            {% else %}
+            <select class="select" name="department" required>
+              {% regroup departments by city_corp as corp_list %}
+              {% for corp in corp_list %}
+              <optgroup label="{{ corp.grouper }}">
+                {% for d in corp.list %}
+                <option value="{{ d.pk }}" {% if c.department_id == d.pk %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
+            </select>
+            {% endif %}
+          </div>
+          <div class="fg" style="align-self:end">
+            <button type="submit" class="btn btn-pr btn-full">Save Department</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Admin override -->
+    {% if user.role == 'admin' or user.role == 'super_admin' %}
+    <div class="card">
+      <h4 class="mb2">Admin Override</h4>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="override">
+        <div class="form-row">
+          <div class="fg">
+            <label class="label">Force Status</label>
+            <select class="select" name="new_status">
+              {% for val,label in status_choices %}
+              <option value="{{ val }}" {% if val == c.status %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="fg">
+            <label class="label">Notes</label>
+            <input class="input" type="text" name="notes" placeholder="Reason for override...">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm">Apply Override</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Timeline -->
+  <div>
+    <div class="card">
+      <h4 class="mb2">Status Timeline</h4>
+      <div class="timeline">
+        {% for h in history %}
+        <div class="tl-item">
+          <div class="tl-dot {% if h.status == 'resolved' or h.status == 'closed' %}done{% elif h.status == 'rejected' %}danger{% else %}active{% endif %}"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">{{ h.get_status_display }}</div>
+          {% if h.notes %}<div class="tl-sub">{{ h.notes }}</div>{% endif %}
+          <div class="tl-sub">by {{ h.changed_by.get_full_name|default:h.changed_by.username }}</div>
+        </div>
+        {% empty %}
+        <p class="xs muted">No history yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block full_content %}
+<div class="layout">
+<aside class="sidebar" role="complementary" aria-label="Dashboard navigation">
+
+  <div class="sb-label">Navigation</div>
+  <a href="{% url 'dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <span class="sb-icon">⊞</span> Dashboard
+  </a>
+
+  {% if user.role == 'citizen' %}
+  <a href="{% url 'complaint_list' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_list' %}active{% endif %}">
+    <span class="sb-icon">📋</span> My Complaints
+  </a>
+  <a href="{% url 'complaint_create' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_create' %}active{% endif %}">
+    <span class="sb-icon">＋</span> Report Issue
+  </a>
+
+  {% elif user.role == 'surveyor' %}
+  <a href="{% url 'surveyor_queue' %}" class="sb-link {% if request.resolver_match.url_name == 'surveyor_queue' %}active{% endif %}">
+    <span class="sb-icon">🔍</span> My Queue
+  </a>
+  <a href="{% url 'complaint_list' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_list' %}active{% endif %}">
+    <span class="sb-icon">📋</span> All Complaints
+  </a>
+
+  {% elif user.role == 'worker' or user.role == 'technician' %}
+  <a href="{% url 'worker_tasks' %}" class="sb-link {% if request.resolver_match.url_name == 'worker_tasks' %}active{% endif %}">
+    <span class="sb-icon">🔧</span> My Tasks
+  </a>
+  <a href="{% url 'complaint_list' %}" class="sb-link">
+    <span class="sb-icon">📋</span> View Complaints
+  </a>
+
+  {% elif user.role == 'admin' or user.role == 'super_admin' %}
+  <div class="sb-label">Management</div>
+  <a href="{% url 'admin_complaints' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
+    <span class="sb-icon">📋</span> All Complaints
+  </a>
+  <a href="{% url 'finance_dashboard' %}" class="sb-link {% if 'finance' in request.resolver_match.url_name %}active{% endif %}">
+    <span class="sb-icon">💰</span> Finance
+  </a>
+  <a href="{% url 'admin_users' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+    <span class="sb-icon">👥</span> Users
+  </a>
+  <a href="{% url 'department_list' %}" class="sb-link {% if 'department' in request.resolver_match.url_name %}active{% endif %}">
+    <span class="sb-icon">🏛️</span> Departments
+  </a>
+  {% if user.role == 'super_admin' %}
+  <a href="{% url 'superadmin_dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+    <span class="sb-icon">🛡️</span> Super Admin
+  </a>
+  {% endif %}
+  {% endif %}
+
+  <div class="sb-label">Account</div>
+  <a href="{% url 'notification_list' %}" class="sb-link {% if request.resolver_match.url_name == 'notification_list' %}active{% endif %}">
+    <span class="sb-icon">🔔</span> Notifications
+    {% if unread_notif_count > 0 %}<span class="sb-badge">{{ unread_notif_count }}</span>{% endif %}
+  </a>
+  <a href="{% url 'profile' %}" class="sb-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+    <span class="sb-icon">⚙</span> Profile
+  </a>
+
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="avatar xs">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+      <div>
+        <div class="name">{{ user.get_full_name|default:user.username }}</div>
+        <div class="role-tag">{{ user.get_role_display }}</div>
+      </div>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm w100">Sign out</a>
+  </div>
+</aside>
+
+<main class="main" role="main">{% block content %}{% endblock %}</main>
+</div>
+{% endblock %}

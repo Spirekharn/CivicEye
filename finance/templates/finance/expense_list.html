@@ -1,0 +1,30 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Expenses{% endblock %}
+{% block content %}
+<div class="pg-hdr"><div><h1>All Expenses</h1><p class="sub">{{ expenses.count }} expense{{ expenses.count|pluralize }}</p></div><a href="{% url 'finance_dashboard' %}" class="btn btn-outline">&larr; Finance</a></div>
+<div class="card">
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Title</th><th>Department</th><th>Amount (BDT)</th><th>Fiscal Year</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for exp in expenses %}
+      <tr>
+        <td class="sm semi">{{ exp.title|truncatechars:50 }}</td>
+        <td class="xs">{{ exp.department.name }}</td>
+        <td class="mono semi">{{ exp.amount|floatformat:0 }}</td>
+        <td class="xs mono">{{ exp.fiscal_year }}</td>
+        <td><span class="badge {% if exp.status == 'approved' %}b-resolved{% elif exp.status == 'rejected' %}b-rejected{% else %}b-budget_pending{% endif %}">{{ exp.status }}</span></td>
+        <td>
+          {% if exp.complaint %}<a href="{% url 'complaint_detail' exp.complaint.pk %}" class="btn btn-outline btn-sm">Complaint</a>{% endif %}
+          {% if exp.status == 'pending' and user.role == 'admin' or exp.status == 'pending' and user.role == 'super_admin' %}
+          <a href="{% url 'approve_expense' exp.pk %}?action=approve" class="btn btn-green btn-sm">Approve</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="tc muted sm" style="padding:2rem">No expenses found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

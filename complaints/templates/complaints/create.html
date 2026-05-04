@@ -1,0 +1,99 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Report Issue{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div><h1>Report a Civic Issue</h1><p class="sub">Your complaint will be routed to the correct department</p></div>
+</div>
+<div class="g2" style="align-items:start;gap:2rem">
+  <div class="card">
+    {% if messages %}{% for msg in messages %}<div class="alert danger mb2">{{ msg }}</div>{% endfor %}{% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="fg">
+        <label class="label">Issue Title <span style="color:var(--r)">*</span></label>
+        <input class="input" type="text" name="title" value="{{ post.title|default:'' }}" placeholder="e.g. Large pothole on Dhanmondi Road 27" required maxlength="200">
+      </div>
+      <div class="fg">
+        <label class="label">Category <span style="color:var(--r)">*</span></label>
+        <select class="select" name="category" required>
+          <option value="">Select category</option>
+          <option value="roads" {% if post.category == 'roads' %}selected{% endif %}>Roads &amp; Infrastructure</option>
+          <option value="water" {% if post.category == 'water' %}selected{% endif %}>Water &amp; Sewerage</option>
+          <option value="electricity" {% if post.category == 'electricity' %}selected{% endif %}>Electricity &amp; Lights</option>
+          <option value="sanitation" {% if post.category == 'sanitation' %}selected{% endif %}>Sanitation &amp; Waste</option>
+          <option value="parks" {% if post.category == 'parks' %}selected{% endif %}>Parks &amp; Recreation</option>
+          <option value="health" {% if post.category == 'health' %}selected{% endif %}>Public Health</option>
+          <option value="building" {% if post.category == 'building' %}selected{% endif %}>Building &amp; Construction</option>
+          <option value="transport" {% if post.category == 'transport' %}selected{% endif %}>Transport &amp; Traffic</option>
+          <option value="environment" {% if post.category == 'environment' %}selected{% endif %}>Environment &amp; Drainage</option>
+          <option value="fire" {% if post.category == 'fire' %}selected{% endif %}>Fire &amp; Emergency</option>
+          <option value="it" {% if post.category == 'it' %}selected{% endif %}>IT &amp; Technology</option>
+          <option value="admin_dept" {% if post.category == 'admin_dept' %}selected{% endif %}>General Administration</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Department</label>
+        <select class="select" name="department">
+          <option value="">Auto-route from category and location</option>
+          {% regroup departments by city_corp as corp_list %}
+          {% for corp in corp_list %}
+          <optgroup label="{{ corp.grouper }}">
+            {% for d in corp.list %}
+            <option value="{{ d.pk }}" {% if post.department == d.pk|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+        <p class="hint">Leave this on auto-route unless you already know the exact department.</p>
+      </div>
+      <div class="fg">
+        <label class="label">Priority <span style="color:var(--r)">*</span></label>
+        <select class="select" name="priority" required>
+          {% for value,label in priority_choices %}
+          <option value="{{ value }}" {% if post.priority == value or not post.priority and value == 'medium' %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Description <span style="color:var(--r)">*</span></label>
+        <textarea class="textarea" name="description" rows="5" placeholder="Describe the issue in detail." required>{{ post.description|default:'' }}</textarea>
+      </div>
+      <div class="fg">
+        <label class="label">Location <span style="color:var(--r)">*</span></label>
+        <input class="input" type="text" name="location_text" value="{{ post.location_text|default:'' }}" placeholder="e.g. Dhanmondi Road 27, near Central Mosque" required maxlength="300">
+        <p class="hint">The system can detect city corporation from this text when department is auto-routed.</p>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="label">Latitude (optional)</label>
+          <input class="input" type="number" name="latitude" step="any" value="{{ post.latitude|default:'' }}" placeholder="23.7465">
+        </div>
+        <div class="fg">
+          <label class="label">Longitude (optional)</label>
+          <input class="input" type="number" name="longitude" step="any" value="{{ post.longitude|default:'' }}" placeholder="90.3760">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="label">Photo Evidence (optional)</label>
+        <input class="input" type="file" name="image" accept="image/*" style="padding:.5rem">
+        <p class="hint">JPG, PNG or WEBP. Max 10MB.</p>
+      </div>
+      <div class="fg" style="display:flex;align-items:center;gap:.6rem">
+        <input type="checkbox" name="is_anonymous" id="anon" {% if post.is_anonymous %}checked{% endif %} style="width:16px;height:16px;accent-color:var(--pr)">
+        <label for="anon" class="label" style="margin:0;cursor:pointer">Submit anonymously</label>
+      </div>
+      <button type="submit" class="btn btn-pr btn-full" style="margin-top:.5rem">Submit Complaint</button>
+    </form>
+  </div>
+  <div>
+    <div class="card mb2" style="background:var(--pr-l);border-color:var(--pr)">
+      <h5 class="text-pr mb1">Routing</h5>
+      <p class="sm">Choose a department directly, or leave it on auto-route so category and location select the department.</p>
+    </div>
+    <div class="card mb2">
+      <h5 class="mb1">Workflow</h5>
+      <p class="xs" style="line-height:1.7">Submit complaint, department admin assigns a surveyor, surveyor submits cost, admin approves budget, worker resolves, citizen rates the result.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

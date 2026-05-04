@@ -1,0 +1,60 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="pg-hdr"><div><h1>Your Profile</h1><p class="sub">Manage your account settings</p></div></div>
+<div class="g2" style="align-items:start">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--bdr)">
+      <div class="avatar xl">{% if user.profile_picture %}<img src="{{ user.profile_picture.url }}" alt="">{% else %}{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}{% endif %}</div>
+      <div>
+        <div class="bold" style="font-size:1.1rem">{{ user.get_full_name|default:user.username }}</div>
+        <div class="sm muted">@{{ user.username }}</div>
+        <div class="flex-c gap-1 mt1"><span class="badge b-green">{{ user.get_role_display }}</span>{% if user.department %}<span class="badge b-teal">{{ user.department.name }}</span>{% endif %}</div>
+      </div>
+    </div>
+    {% if messages %}{% for msg in messages %}<div class="alert {% if msg.tags == 'error' %}danger{% else %}success{% endif %} mb2">{{ msg }}</div>{% endfor %}{% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="fg"><label class="label">First Name</label><input class="input" type="text" name="first_name" value="{{ user.first_name }}"></div>
+        <div class="fg"><label class="label">Last Name</label><input class="input" type="text" name="last_name" value="{{ user.last_name }}"></div>
+      </div>
+      <div class="fg"><label class="label">Email</label><input class="input" type="email" name="email" value="{{ user.email }}"></div>
+      <div class="fg"><label class="label">Phone</label><input class="input" type="tel" name="phone" value="{{ user.phone }}"></div>
+      <div class="fg"><label class="label">Address</label><textarea class="textarea" name="address" rows="2">{{ user.address }}</textarea></div>
+      <div class="fg">
+        <label class="label">Theme Preference</label>
+        <select class="select" name="theme">
+          <option value="light" {% if user.theme != 'dark' %}selected{% endif %}>Light Mode</option>
+          <option value="dark" {% if user.theme == 'dark' %}selected{% endif %}>Dark Mode</option>
+        </select>
+      </div>
+      <div class="fg"><label class="label">Profile Picture</label><input class="input" type="file" name="profile_picture" accept="image/*" style="padding:.5rem"></div>
+      <button type="submit" class="btn btn-pr btn-full">Save Changes</button>
+    </form>
+  </div>
+  <div>
+    <div class="card mb2">
+      <h5 class="mb2">Account Info</h5>
+      <div style="display:grid;gap:.7rem">
+        <div><div class="xxs muted bold mono mb1">USERNAME</div><div class="sm mono">{{ user.username }}</div></div>
+        <div><div class="xxs muted bold mono mb1">ROLE</div><div class="sm">{{ user.get_role_display }}</div></div>
+        {% if user.department %}<div><div class="xxs muted bold mono mb1">DEPARTMENT</div><div class="sm">{{ user.department.name }}<br><span class="xs muted">{{ user.department.city_corp }}</span></div></div>{% endif %}
+        <div><div class="xxs muted bold mono mb1">MEMBER SINCE</div><div class="sm mono">{{ user.date_joined|date:"d M Y" }}</div></div>
+        <div><div class="xxs muted bold mono mb1">ACCOUNT STATUS</div><div class="badge {% if user.is_active %}b-green{% else %}b-rejected{% endif %}">{% if user.is_active %}Active{% else %}Inactive{% endif %}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h5 class="mb2">Quick Theme Toggle</h5>
+      <form method="post" action="{% url 'profile' %}">
+        {% csrf_token %}
+        <input type="hidden" name="theme_only" value="1">
+        <input type="hidden" name="theme" value="{% if user.theme == 'dark' %}light{% else %}dark{% endif %}">
+        <button type="submit" class="btn btn-outline btn-full">
+          Switch to {% if user.theme == 'dark' %}Light{% else %}Dark{% endif %} Mode
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
