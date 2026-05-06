@@ -1,0 +1,51 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Assign Worker{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <h1>Assign {{ needed|capfirst }}</h1>
+    <p class="sub">{{ c.title|truncatechars:60 }} &mdash; requires a <strong>{{ needed }}</strong></p>
+  </div>
+  <a href="{% url 'complaint_detail' c.pk %}" class="btn btn-outline">&larr; Back</a>
+</div>
+<div class="g2" style="align-items:start">
+  <div class="card">
+    {% if not workers %}
+    <div class="alert warning">No {{ needed }}s are registered in {{ c.department.name|default:'this department' }}.</div>
+    {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="fg">
+        <label class="label">Select {{ needed|capfirst }} <span style="color:var(--r)">*</span></label>
+        <select class="select" name="worker" required>
+          <option value="">— Choose —</option>
+          {% for w in workers %}
+          <option value="{{ w.pk }}">{{ w.get_full_name }} (@{{ w.username }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Notes (optional)</label>
+        <textarea class="textarea" name="notes" rows="3" placeholder="Instructions for the {{ needed }}..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-pr btn-full">Assign &amp; Notify</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h4 class="mb2">Why a {{ needed|capfirst }}?</h4>
+    <p class="sm">This complaint is categorised as <strong>{{ c.get_category_display }}</strong>.</p>
+    {% if needed == 'technician' %}
+    <p class="sm mt1">Technical categories (electricity, transport, IT) require a Technician with specialist expertise.</p>
+    {% else %}
+    <p class="sm mt1">Physical categories (roads, water, sanitation, etc.) are handled by trained Field Workers.</p>
+    {% endif %}
+    {% if c.survey_report %}
+    <div class="hr"></div>
+    <h5 class="mb1">Survey Estimate</h5>
+    <p class="sm bold">BDT {{ c.survey_report.estimated_cost|floatformat:0 }}</p>
+    <p class="xs muted">Est. {{ c.survey_report.estimated_days }} day(s)</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

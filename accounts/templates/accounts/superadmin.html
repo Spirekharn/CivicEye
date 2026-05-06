@@ -1,0 +1,57 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Super Admin{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div><h1>Super Admin Panel</h1><p class="sub">System-wide oversight — all city corporations</p></div>
+  <div class="pg-actions">
+    <a href="{% url 'admin_users' %}" class="btn btn-pr">Allocate Departments</a>
+    <a href="/admin/" class="btn btn-amber">Django Admin</a>
+    <a href="{% url 'admin_complaints' %}" class="btn btn-outline">All Complaints</a>
+  </div>
+</div>
+<div class="stats stagger">
+  <div class="stat"><div class="stat-l">Total Complaints</div><div class="stat-v mono">{{ all_complaints }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Pending</div><div class="stat-v mono">{{ pending }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">In Progress</div><div class="stat-v mono">{{ in_progress }}</div></div>
+  <div class="stat stat-green"><div class="stat-l">Resolved</div><div class="stat-v mono">{{ resolved }}</div></div>
+  <div class="stat"><div class="stat-l">Total Users</div><div class="stat-v mono">{{ total_users }}</div></div>
+  <div class="stat"><div class="stat-l">Departments</div><div class="stat-v mono">{{ total_depts }}</div></div>
+  <div class="stat"><div class="stat-l">Budget Allocated</div><div class="stat-v mono" style="font-size:1.2rem">৳{{ total_budget|floatformat:0 }}</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Budget Spent</div><div class="stat-v mono" style="font-size:1.2rem">৳{{ total_spent|floatformat:0 }}</div></div>
+</div>
+
+{% if corp_stats %}
+<div class="card mb2">
+  <h4 class="mb2">Complaints by City Corporation</h4>
+  {% for row in corp_stats %}
+  <div style="display:flex;align-items:center;gap:1rem;padding:.7rem 0;border-bottom:1px solid var(--bdr)">
+    <div class="badge b-teal" style="width:60px;text-align:center">{{ row.city_corp }}</div>
+    <div style="flex:1"><div class="prog"><div class="prog-fill" style="width:{% if all_complaints %}{% widthratio row.c all_complaints 100 %}{% else %}0{% endif %}%"></div></div></div>
+    <div class="xs mono bold">{{ row.c }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="g2">
+  <div class="card">
+    <div class="flex-b mb2"><h4>Recent Users</h4><a href="{% url 'admin_users' %}" class="btn btn-outline btn-sm">All users</a></div>
+    {% for u in recent_users %}
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--bdr)">
+      <div class="avatar xs">{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}</div>
+      <div style="flex:1"><div class="sm semi">{{ u.get_full_name|default:u.username }}</div><div class="xs muted">{{ u.get_role_display }}</div></div>
+      <div class="xs mono muted">{{ u.date_joined|date:"d M" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card">
+    <div class="flex-b mb2"><h4>All Departments</h4><a href="{% url 'department_list' %}" class="btn btn-outline btn-sm">View all</a></div>
+    {% for d in departments %}
+    <div style="display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--bdr)">
+      <span class="badge b-teal" style="min-width:48px;text-align:center;font-size:.55rem">{{ d.city_corp }}</span>
+      <span class="sm semi" style="flex:1">{{ d.name }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

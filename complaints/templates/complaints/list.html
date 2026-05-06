@@ -1,56 +1,76 @@
-{% extends 'base.html' %}
-
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Complaints{% endblock %}
 {% block content %}
-
-<div class="container mt-4">
-
-    <h2 class="mb-4">All Complaints</h2>
-
-    <form method="GET" class="mb-4">
-        <input type="text" name="q" placeholder="Search complaints..."
-           class="form-control" value="{{ query }}">
-    </form>
-
-    <a href="/complaints/create/" class="btn btn-dark mb-3">
-    + Create Complaint
-    </a>
-
-
-    {% for c in complaints %}
-        <div class="card p-4 mb-4 shadow border-0" style="border-radius:15px;">
-
-            <h5>
-                <a href="/complaints/{{ c.id }}/">{{ c.title }}</a>
-            </h5>
-
-            <p>{{ c.description }}</p>
-
-            <!-- STATUS -->
-            <p>
-                Status:
-                {% if c.status == "Pending" %}
-                    <span class="badge bg-warning text-dark">Pending</span>
-                {% elif c.status == "In Progress" %}
-                    <span class="badge bg-info text-dark">In Progress</span>
-                {% elif c.status == "Resolved" %}
-                    <span class="badge bg-success">Resolved</span>
-                {% endif %}
-            </p>
-
-            <!-- ASSIGN BUTTON -->
-            <a href="/complaints/assign/{{ c.id }}/" class="btn btn-sm btn-warning mb-2">
-                Assign
-            </a>
-
-            {% if c.image %}
-                <img src="{{ c.image.url }}" width="200">
-            {% endif %}
-
-        </div>
-    {% empty %}
-        <p>No complaints yet.</p>
-    {% endfor %}
-
+<div class="pg-hdr">
+  <div>
+    <h1>{% if user.role == 'citizen' %}My Complaints{% else %}Complaint List{% endif %}</h1>
+    <p class="sub">{{ complaints.count }} complaint{{ complaints.count|pluralize }}</p>
+  </div>
+  {% if user.role == 'citizen' %}
+  <a href="{% url 'complaint_create' %}" class="btn btn-pr">+ Report Issue</a>
+  {% endif %}
 </div>
 
+<div class="card mb2">
+  <form method="get" style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end">
+    <div class="fg" style="flex:1;min-width:200px;margin:0">
+      <label class="label">Search</label>
+      <input class="input" type="text" name="q" value="{{ request.GET.q }}" placeholder="Search by title or location...">
+    </div>
+    <div class="fg" style="min-width:150px;margin:0">
+      <label class="label">Status</label>
+      <select class="select" name="status">
+        <option value="">All statuses</option>
+        {% for val,label in status_choices %}
+        <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="fg" style="min-width:140px;margin:0">
+      <label class="label">Category</label>
+      <select class="select" name="category">
+        <option value="">All categories</option>
+        {% for val,label in category_choices %}
+        <option value="{{ val }}" {% if request.GET.category == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-pr" style="height:42px">Filter</button>
+    {% if request.GET.q or request.GET.status or request.GET.category %}
+    <a href="{% url 'complaint_list' %}" class="btn btn-outline" style="height:42px">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  {% if complaints %}
+  {% for c in complaints %}
+  <a href="{% url 'complaint_detail' c.pk %}" class="cc">
+    <div class="cc-ico">{% if c.category == 'roads' %}🛣️{% elif c.category == 'water' %}💧{% elif c.category == 'electricity' %}⚡{% elif c.category == 'sanitation' %}🗑️{% elif c.category == 'parks' %}🌳{% elif c.category == 'health' %}🏥{% elif c.category == 'building' %}🏗️{% elif c.category == 'transport' %}🚌{% elif c.category == 'environment' %}🌊{% elif c.category == 'fire' %}🚒{% elif c.category == 'it' %}💻{% else %}🏛️{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div class="flex-b">
+        <div class="semi sm trunc" style="max-width:60%">{{ c.title }}</div>
+        <span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span>
+      </div>
+      <div class="cc-meta">
+        <span class="badge b-{{ c.priority }}">{{ c.priority }}</span>
+        <span class="xs muted">{{ c.get_category_display }}</span>
+        <span class="xs muted">{{ c.city_corp }}</span>
+        <span class="xs muted">{{ c.created_at|date:"d M Y" }}</span>
+      </div>
+      {% with c.get_status_progress as pct %}
+      <div class="prog mt2" style="margin-top:.5rem"><div class="prog-fill" style="width:{{ pct }}%"></div></div>
+      {% endwith %}
+    </div>
+  </a>
+  {% endfor %}
+  {% else %}
+  <div class="empty">
+    <div class="empty-ico">📭</div>
+    <h3>No complaints found</h3>
+    <p class="sm mt1">{% if request.GET.q or request.GET.status %}Try adjusting your filters.{% else %}Be the first to report an issue.{% endif %}</p>
+    {% if user.role == 'citizen' %}<a href="{% url 'complaint_create' %}" class="btn btn-pr mt2">Report an Issue</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

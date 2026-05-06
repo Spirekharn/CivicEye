@@ -1,25 +1,63 @@
-{% extends 'base.html' %}
-
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Assign Complaint{% endblock %}
 {% block content %}
-
-<div class="container mt-5">
-    <h2>Assign Complaint</h2>
-
-    <form method="POST">
-        {% csrf_token %}
-
-        <label>Select User:</label>
-
-        <select name="user" class="form-control mb-3">
-            {% for u in users %}
-                <option value="{{ u.id }}">{{ u.username }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit" class="btn btn-dark">
-            Assign
-        </button>
-    </form>
+<div class="pg-hdr">
+  <div><h1>Assign Complaint</h1><p class="sub">{{ c.title|truncatechars:60 }}</p></div>
+  <a href="{% url 'complaint_detail' c.pk %}" class="btn btn-outline">&larr; Back</a>
 </div>
-
+<div class="g2" style="align-items:start">
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="fg">
+        <label class="label">Department <span style="color:var(--r)">*</span></label>
+        <select class="select" name="department" required>
+          <option value="">Select department</option>
+          {% regroup departments by city_corp as corp_list %}
+          {% for corp in corp_list %}
+          <optgroup label="{{ corp.grouper }}">
+            {% for d in corp.list %}
+            <option value="{{ d.pk }}" {% if c.department_id == d.pk %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Surveyor</label>
+        <select class="select" name="surveyor">
+          <option value="">Save department only</option>
+          {% for sv in surveyors %}
+          <option value="{{ sv.pk }}">{{ sv.get_full_name|default:sv.username }} (@{{ sv.username }})</option>
+          {% endfor %}
+        </select>
+        {% if c.department and not surveyors %}
+        <p class="hint">No active surveyors are registered in this department yet.</p>
+        {% endif %}
+      </div>
+      <div class="fg">
+        <label class="label">Set Priority</label>
+        <select class="select" name="priority">
+          {% for value,label in priority_choices %}
+          <option value="{{ value }}" {% if c.priority == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Notes (optional)</label>
+        <textarea class="textarea" name="notes" rows="3" placeholder="Instructions for the surveyor..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-pr btn-full">Save Assignment</button>
+    </form>
+  </div>
+  <div class="card">
+    <h4 class="mb2">Complaint Summary</h4>
+    <p class="sm mb1"><strong>Current department:</strong> {{ c.department.name|default:'Unassigned' }}</p>
+    <p class="sm mb1"><strong>Category:</strong> {{ c.get_category_display }}</p>
+    <p class="sm mb1"><strong>Location:</strong> {{ c.location_text }}</p>
+    <p class="sm mb1"><strong>City Corp:</strong> {{ c.city_corp }}</p>
+    <p class="sm mb2">{{ c.description|truncatechars:200 }}</p>
+    {% if c.image %}<img src="{{ c.image.url }}" style="max-width:100%;border-radius:8px" alt="Evidence photo">{% endif %}
+  </div>
+</div>
 {% endblock %}

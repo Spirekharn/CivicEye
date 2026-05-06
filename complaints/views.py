@@ -1,65 +1,518 @@
-from django.shortcuts import render, redirect
+"""complaints/views.py — Full industry-level workflow."""
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth import get_user_model
-from .models import Complaint
+from django.db.models import Q
+from decimal import Decimal, InvalidOperation
+from .models import Complaint, ComplaintStatusHistory, SurveyReport, ComplaintFeedback
+from .models import PRIORITY_CHOICES
+from .location_router import detect_city_corp, get_department_for_complaint
+from accounts.models import User
+from departments.models import Department
+from notifications.models import Notification
+from finance.models import Expense, DepartmentBudget
 
-User = get_user_model()
 
-def complaint_detail(request, id):
-    complaint = Complaint.objects.get(id=id)
-    return render(request, 'complaints/detail.html', {'complaint': complaint})
+def _notify(user, title, msg, ntype, complaint=None):
+    Notification.objects.create(user=user, title=title, message=msg,
+                                 notification_type=ntype, complaint=complaint)
 
 
+def _log(complaint, status, user, notes=''):
+    ComplaintStatusHistory.objects.create(
+        complaint=complaint, status=status, changed_by=user, notes=notes)
+
+
+def _can_view_complaint(user, complaint):
+    if user.role == 'super_admin':
+        return True
+    if user.role == 'citizen':
+        return complaint.citizen_id == user.id
+    if user.role == 'admin':
+        return user.department_id and (
+            complaint.department_id == user.department_id or complaint.department_id is None
+        )
+    if user.role == 'surveyor':
+        return complaint.assigned_surveyor_id == user.id
+    if user.role in ('worker', 'technician'):
+        return complaint.assigned_worker_id == user.id
+    return False
+
+
+def _parse_money(value):
+    try:
+        amount = Decimal(value or '0')
+    except (InvalidOperation, TypeError):
+        raise ValueError('Cost estimates must be valid numbers.')
+    if amount < 0:
+        raise ValueError('Cost estimates cannot be negative.')
+    return amount
+
+
+def _parse_days(value):
+    try:
+        days = int(value or 1)
+    except (TypeError, ValueError):
+        raise ValueError('Estimated days must be a whole number.')
+    if days < 1 or days > 365:
+        raise ValueError('Estimated days must be between 1 and 365.')
+    return days
+
+
+STATUS_CHOICES = [
+    ('submitted','Submitted'), ('under_review','Under Review'), ('assigned','Assigned'),
+    ('surveying','Surveying'), ('survey_done','Survey Done'), ('budget_pending','Budget Pending'),
+    ('budget_approved','Budget Approved'), ('worker_assigned','Worker Assigned'),
+    ('in_progress','In Progress'), ('resolved','Resolved'), ('closed','Closed'), ('rejected','Rejected'),
+]
+CATEGORY_CHOICES = [
+    ('roads','Roads & Infrastructure'), ('water','Water & Sewerage'),
+    ('electricity','Electricity & Lights'), ('sanitation','Sanitation & Waste'),
+    ('parks','Parks & Recreation'), ('health','Public Health'),
+    ('building','Building & Construction'), ('transport','Transport & Traffic'),
+    ('environment','Environment & Drainage'), ('fire','Fire & Emergency'),
+    ('it','IT & Technology'), ('admin_dept','General Administration'),
+    ('other','Other'),
+]
+
+
+@login_required
 def complaint_list(request):
-    query = request.GET.get('q')
-
-    if query:
-        complaints = Complaint.objects.filter(title__icontains=query)
+    u = request.user
+    if u.role == 'citizen':
+        qs = Complaint.objects.filter(citizen=u)
+    elif u.role == 'surveyor':
+        qs = Complaint.objects.filter(assigned_surveyor=u)
+    elif u.role in ('worker', 'technician'):
+        qs = Complaint.objects.filter(assigned_worker=u)
+    elif u.role == 'admin':
+        qs = Complaint.objects.filter(department=u.department)
     else:
-        complaints = Complaint.objects.all()
+        qs = Complaint.objects.all()
+
+    q = request.GET.get('q', '')
+    status_f = request.GET.get('status', '')
+    cat_f = request.GET.get('category', '')
+    if q:
+        qs = qs.filter(Q(title__icontains=q) | Q(location_text__icontains=q) | Q(description__icontains=q))
+    if status_f:
+        qs = qs.filter(status=status_f)
+    if cat_f:
+        qs = qs.filter(category=cat_f)
 
     return render(request, 'complaints/list.html', {
-        'complaints': complaints,
-        'query': query
+        'complaints': qs.order_by('-created_at'),
+        'status_choices': STATUS_CHOICES,
+        'category_choices': CATEGORY_CHOICES,
     })
 
 
-def create_complaint(request):
-    error = None
-
+@login_required
+def complaint_create(request):
+    if request.user.role not in ('citizen', 'super_admin'):
+        messages.error(request, 'Only citizens can submit complaints.')
+        return redirect('dashboard')
     if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        image = request.FILES.get('image')
+        title = request.POST.get('title', '').strip()
+        desc  = request.POST.get('description', '').strip()
+        cat   = request.POST.get('category', '')
+        priority = request.POST.get('priority', 'medium')
+        dept_id = request.POST.get('department', '')
+        loc   = request.POST.get('location_text', '').strip()
+        lat   = request.POST.get('latitude') or None
+        lng   = request.POST.get('longitude') or None
+        anon  = bool(request.POST.get('is_anonymous'))
 
-        if not title or not description:
-            error = "Title and Description are required"
+        if not all([title, desc, cat, loc]):
+            messages.error(request, 'Please fill in all required fields.')
+            return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
+        if cat not in dict(CATEGORY_CHOICES):
+            messages.error(request, 'Please choose a valid complaint category.')
+            return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
+        if priority not in dict(PRIORITY_CHOICES):
+            messages.error(request, 'Please choose a valid priority.')
+            return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
+
+        city_corp = detect_city_corp(loc)
+        if dept_id:
+            dept = get_object_or_404(Department, id=dept_id, is_active=True)
+            city_corp = dept.city_corp
         else:
-            Complaint.objects.create(
-                user=request.user,
-                title=title,
-                description=description,
-                image=image,
-                status='Pending'
-            )
+            dept = get_department_for_complaint(cat, city_corp)
 
-            messages.success(request, "Complaint submitted successfully!")
-            return redirect('/complaints/')
+        c = Complaint(
+            citizen=request.user, title=title, description=desc,
+            category=cat, location_text=loc, city_corp=city_corp,
+            department=dept, status='submitted', priority=priority,
+            is_anonymous=anon,
+        )
+        if lat:
+            try:
+                c.latitude = float(lat)
+            except (TypeError, ValueError):
+                messages.error(request, 'Latitude must be a valid number.')
+                return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
+        if lng:
+            try:
+                c.longitude = float(lng)
+            except (TypeError, ValueError):
+                messages.error(request, 'Longitude must be a valid number.')
+                return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
+        if request.FILES.get('image'):
+            c.image = request.FILES['image']
+        c.save()
+        _log(c, 'submitted', request.user, 'Complaint submitted.')
 
-    return render(request, 'complaints/create.html', {'error': error})
+        # Notify dept admins
+        if dept:
+            for admin in User.objects.filter(role='admin', department=dept, is_active=True):
+                _notify(admin, 'New Complaint', f'New complaint: {c.title}', 'complaint_submitted', c)
+        # Notify super admins
+        for sa in User.objects.filter(role='super_admin', is_active=True):
+            _notify(sa, 'New Complaint', f'New complaint in {city_corp}: {c.title}', 'complaint_submitted', c)
 
-def assign_complaint(request, id):
-    complaint = Complaint.objects.get(id=id)
-    users = User.objects.all()
+        messages.success(request, f'Complaint submitted successfully! Routed to {city_corp} — {dept.name if dept else "system"}.')
+        return redirect('complaint_detail', pk=c.pk)
+
+    return render(request, 'complaints/create.html', _complaint_form_context())
+
+
+def _complaint_form_context(post=None):
+    return {
+        'departments': Department.objects.filter(is_active=True).order_by('city_corp', 'name'),
+        'priority_choices': PRIORITY_CHOICES,
+        'post': post,
+    }
+
+
+@login_required
+def complaint_detail(request, pk):
+    c = get_object_or_404(Complaint, pk=pk)
+    u = request.user
+
+    if not _can_view_complaint(u, c):
+        messages.error(request, 'Access denied.')
+        return redirect('complaint_list')
+
+    history = c.history.order_by('created_at')
+    try:
+        survey = c.survey_report
+    except SurveyReport.DoesNotExist:
+        survey = None
+    try:
+        feedback = c.feedback
+    except ComplaintFeedback.DoesNotExist:
+        feedback = None
+
+    # Handle feedback submission
+    if request.method == 'POST' and request.POST.get('action') == 'feedback':
+        if u.role == 'citizen' and c.citizen == u and c.status in ('resolved', 'closed') and not feedback:
+            try:
+                rating = int(request.POST.get('rating', 3))
+            except (TypeError, ValueError):
+                rating = 3
+            rating = max(1, min(5, rating))
+            comment = request.POST.get('comment', '').strip()
+            ComplaintFeedback.objects.create(complaint=c, citizen=u, rating=rating, comment=comment)
+            messages.success(request, 'Thank you for your feedback!')
+            return redirect('complaint_detail', pk=pk)
+
+    # Handle admin status override
+    if request.method == 'POST' and request.POST.get('action') == 'override':
+        if u.role in ('admin', 'super_admin'):
+            new_status = request.POST.get('new_status')
+            notes = request.POST.get('notes', '')
+            if new_status:
+                c.status = new_status
+                if new_status == 'resolved':
+                    c.resolution_notes = notes
+                c.save()
+                _log(c, new_status, u, notes or f'Status overridden to {new_status} by {u.username}.')
+                messages.success(request, f'Status updated to {new_status}.')
+                return redirect('complaint_detail', pk=pk)
+
+    if request.method == 'POST' and request.POST.get('action') == 'department':
+        if u.role in ('admin', 'super_admin'):
+            dept_id = request.POST.get('department')
+            if u.role == 'admin' and u.department_id:
+                dept = u.department
+            else:
+                dept = get_object_or_404(Department, id=dept_id, is_active=True)
+            c.department = dept
+            c.city_corp = dept.city_corp
+            if c.status == 'submitted':
+                c.status = 'under_review'
+            c.save(update_fields=['department', 'city_corp', 'status', 'updated_at'])
+            _log(c, c.status, u, f'Department assigned to {dept.name}.')
+            messages.success(request, f'Department set to {dept.name}.')
+            return redirect('complaint_detail', pk=pk)
+
+    dept_surveyors = []
+    dept_workers   = []
+    if u.role in ('admin', 'super_admin') and c.department:
+        dept_surveyors = User.objects.filter(role='surveyor', department=c.department, is_active=True)
+        needed = c.required_worker_type()
+        dept_workers = User.objects.filter(role=needed, department=c.department, is_active=True)
+
+    expense = None
+    try:
+        expense = c.expense
+    except Expense.DoesNotExist:
+        expense = None
+
+    return render(request, 'complaints/detail.html', {
+        'c': c, 'history': history, 'survey': survey,
+        'feedback': feedback, 'expense': expense,
+        'dept_surveyors': dept_surveyors,
+        'dept_workers': dept_workers,
+        'status_choices': STATUS_CHOICES,
+        'departments': Department.objects.filter(is_active=True).order_by('city_corp', 'name'),
+        'progress': c.get_status_progress(),
+    })
+
+
+@login_required
+def admin_complaints(request):
+    if request.user.role not in ('admin', 'super_admin'):
+        return redirect('dashboard')
+    u = request.user
+    if u.role == 'admin':
+        qs = Complaint.objects.filter(Q(department=u.department) | Q(department__isnull=True))
+    else:
+        qs = Complaint.objects.all()
+
+    q       = request.GET.get('q', '')
+    status_f= request.GET.get('status', '')
+    cat_f   = request.GET.get('category', '')
+    prio_f  = request.GET.get('priority', '')
+    corp_f  = request.GET.get('corp', '')
+
+    if q: qs = qs.filter(Q(title__icontains=q)|Q(location_text__icontains=q)|Q(citizen__username__icontains=q))
+    if status_f: qs = qs.filter(status=status_f)
+    if cat_f:    qs = qs.filter(category=cat_f)
+    if prio_f:   qs = qs.filter(priority=prio_f)
+    if corp_f:   qs = qs.filter(city_corp=corp_f)
+
+    return render(request, 'complaints/admin_list.html', {
+        'complaints': qs.order_by('-created_at'),
+        'status_choices': STATUS_CHOICES,
+        'category_choices': CATEGORY_CHOICES,
+        'corps': Complaint.objects.values_list('city_corp', flat=True).distinct(),
+        'total': qs.count(),
+        'pending': qs.filter(status__in=['submitted','under_review']).count(),
+        'in_progress': qs.filter(status='in_progress').count(),
+        'resolved': qs.filter(status__in=['resolved','closed']).count(),
+    })
+
+
+@login_required
+def assign_complaint(request, pk):
+    if request.user.role not in ('admin', 'super_admin'):
+        return redirect('dashboard')
+    c = get_object_or_404(Complaint, pk=pk)
+    u = request.user
+    if u.role == 'admin' and c.department and c.department != u.department:
+        messages.error(request, 'Access denied.'); return redirect('admin_complaints')
+
+    dept = c.department
+    departments = Department.objects.filter(is_active=True).order_by('city_corp', 'name')
+    if u.role == 'admin' and u.department_id:
+        departments = departments.filter(id=u.department_id)
+    surveyors = User.objects.filter(role='surveyor', department=dept, is_active=True) if dept else []
 
     if request.method == 'POST':
-        user_id = request.POST.get('user')
-        complaint.assigned_to_id = user_id
-        complaint.status = 'In Progress'
-        complaint.save()
-        return redirect('/complaints/')
+        dept_id = request.POST.get('department', '')
+        sid   = request.POST.get('surveyor')
+        prio  = request.POST.get('priority', c.priority)
+        notes = request.POST.get('notes', '')
+        if prio not in dict(PRIORITY_CHOICES):
+            messages.error(request, 'Please choose a valid priority.')
+            return redirect('assign_complaint', pk=pk)
+        if dept_id:
+            if u.role == 'admin' and u.department_id:
+                dept = u.department
+            else:
+                dept = get_object_or_404(Department, id=dept_id, is_active=True)
+            c.department = dept
+            c.city_corp = dept.city_corp
+            c.priority = prio
+            if c.status == 'submitted':
+                c.status = 'under_review'
+            c.save(update_fields=['department', 'city_corp', 'priority', 'status', 'updated_at'])
+            _log(c, c.status, u, f'Department set to {dept.name}.')
+            surveyors = User.objects.filter(role='surveyor', department=dept, is_active=True)
+        if sid:
+            sv = get_object_or_404(User, id=sid, role='surveyor', department=dept, is_active=True)
+            c.assigned_surveyor = sv
+            c.priority = prio
+            c.status = 'assigned'
+            c.save()
+            _log(c, 'assigned', u, notes or f'Assigned to surveyor {sv.get_full_name()}.')
+            _notify(sv, 'Survey Request', f'You have been assigned to survey: {c.title}', 'survey_request', c)
+            _notify(c.citizen, 'Complaint Assigned', f'Your complaint "{c.title}" has been assigned for inspection.', 'complaint_assigned', c)
+            messages.success(request, f'Assigned to {sv.get_full_name()}.')
+            return redirect('complaint_detail', pk=pk)
+        if dept_id:
+            messages.success(request, f'Department updated to {dept.name}. Select a surveyor when one is available.')
+            return redirect('assign_complaint', pk=pk)
 
     return render(request, 'complaints/assign.html', {
-        'complaint': complaint,
-        'users': users
+        'c': c,
+        'surveyors': surveyors,
+        'departments': departments,
+        'priority_choices': PRIORITY_CHOICES,
     })
+
+
+@login_required
+def assign_worker(request, pk):
+    if request.user.role not in ('admin', 'super_admin'):
+        return redirect('dashboard')
+    c = get_object_or_404(Complaint, pk=pk)
+    u = request.user
+    if u.role == 'admin' and c.department != u.department:
+        messages.error(request, 'Access denied.'); return redirect('admin_complaints')
+    needed = c.required_worker_type()
+    workers = User.objects.filter(role=needed, department=c.department, is_active=True) if c.department else []
+
+    if request.method == 'POST':
+        wid = request.POST.get('worker')
+        notes = request.POST.get('notes', '')
+        if wid:
+            w = get_object_or_404(User, id=wid, role=needed, department=c.department, is_active=True)
+            c.assigned_worker = w
+            c.status = 'worker_assigned'
+            c.save()
+            _log(c, 'worker_assigned', u, notes or f'Assigned to {w.get_full_name()}.')
+            _notify(w, 'Task Assigned', f'You have been assigned a task: {c.title}', 'worker_assigned', c)
+            _notify(c.citizen, 'Worker Assigned', f'A {needed} has been assigned to fix your issue: {c.title}', 'worker_assigned', c)
+            messages.success(request, f'Assigned to {w.get_full_name()}.')
+            return redirect('complaint_detail', pk=pk)
+
+    return render(request, 'complaints/assign_worker.html', {
+        'c': c, 'workers': workers, 'needed': needed})
+
+
+@login_required
+def surveyor_queue(request):
+    if request.user.role != 'surveyor':
+        return redirect('dashboard')
+    qs = Complaint.objects.filter(assigned_surveyor=request.user).order_by('-created_at')
+    return render(request, 'complaints/surveyor_queue.html', {'complaints': qs})
+
+
+@login_required
+def submit_survey(request, pk):
+    if request.user.role != 'surveyor':
+        return redirect('dashboard')
+    c = get_object_or_404(Complaint, pk=pk, assigned_surveyor=request.user)
+
+    if request.method == 'POST':
+        findings  = request.POST.get('findings', '').strip()
+        materials = request.POST.get('materials_needed', '').strip()
+        try:
+            labour = _parse_money(request.POST.get('labor_estimate', 0))
+            equip  = _parse_money(request.POST.get('equipment_estimate', 0))
+            misc   = _parse_money(request.POST.get('misc_estimate', 0))
+            days   = _parse_days(request.POST.get('estimated_days', 1))
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return render(request, 'complaints/survey_form.html', {'c': c})
+        prio_rec  = request.POST.get('priority_recommendation', c.priority)
+
+        if not findings:
+            messages.error(request, 'Findings are required.')
+            return render(request, 'complaints/survey_form.html', {'c': c})
+
+        total = labour + equip + misc
+        sr = SurveyReport.objects.create(
+            complaint=c, surveyor=request.user, findings=findings,
+            materials_needed=materials, labor_estimate=labour,
+            equipment_estimate=equip, misc_estimate=misc,
+            estimated_cost=total, priority_recommendation=prio_rec,
+            estimated_days=days,
+        )
+        if request.FILES.get('survey_image'):
+            sr.survey_image = request.FILES['survey_image']
+            sr.save()
+
+        c.status = 'survey_done'
+        c.priority = prio_rec
+        c.save()
+        _log(c, 'survey_done', request.user, f'Survey completed. Estimated cost: BDT {total:,.0f}.')
+
+        # Auto-create expense
+        if c.department:
+            from finance.models import Expense
+            fiscal = '2025-2026'
+            budget = DepartmentBudget.objects.filter(department=c.department, fiscal_year=fiscal).first()
+            if not hasattr(c, 'expense') or not Expense.objects.filter(complaint=c).exists():
+                Expense.objects.create(
+                    title=f'Survey estimate: {c.title[:80]}',
+                    department=c.department, complaint=c,
+                    amount=total, fiscal_year=fiscal, status='pending',
+                )
+                c.status = 'budget_pending'
+                c.save()
+                _log(c, 'budget_pending', request.user, 'Expense created, awaiting budget approval.')
+
+        # Notify dept admin and citizen
+        if c.department:
+            for admin in User.objects.filter(role='admin', department=c.department, is_active=True):
+                _notify(admin, 'Survey Completed', f'Survey done for: {c.title}. Estimated cost: BDT {total:,.0f}. Awaiting budget approval.', 'survey_done', c)
+        _notify(c.citizen, 'Survey Done', f'Your complaint "{c.title}" has been surveyed. Estimated resolution cost: BDT {total:,.0f}.', 'survey_done', c)
+
+        messages.success(request, f'Survey submitted. Total estimate: BDT {total:,.0f}.')
+        return redirect('complaint_detail', pk=pk)
+
+    return render(request, 'complaints/survey_form.html', {'c': c})
+
+
+@login_required
+def worker_tasks(request):
+    if request.user.role not in ('worker', 'technician'):
+        return redirect('dashboard')
+    qs = Complaint.objects.filter(assigned_worker=request.user).order_by('-updated_at')
+    return render(request, 'complaints/worker_tasks.html', {'complaints': qs})
+
+
+@login_required
+def update_status(request, pk):
+    c = get_object_or_404(Complaint, pk=pk)
+    u = request.user
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        notes      = request.POST.get('notes', '').strip()
+
+        # Worker can only update their own assigned complaints
+        if u.role in ('worker', 'technician') and c.assigned_worker != u:
+            messages.error(request, 'Access denied.'); return redirect('worker_tasks')
+        if u.role == 'surveyor' and c.assigned_surveyor != u:
+            messages.error(request, 'Access denied.'); return redirect('surveyor_queue')
+
+        valid = {
+            'worker': ['in_progress', 'resolved'],
+            'technician': ['in_progress', 'resolved'],
+            'surveyor': ['surveying'],
+            'admin': ['under_review', 'assigned', 'budget_approved', 'worker_assigned', 'resolved', 'closed', 'rejected'],
+            'super_admin': list(dict(STATUS_CHOICES).keys()),
+        }
+        allowed = valid.get(u.role, [])
+        if new_status not in allowed:
+            messages.error(request, 'Invalid status transition.'); return redirect('complaint_detail', pk=pk)
+
+        c.status = new_status
+        if new_status == 'resolved' and notes:
+            c.resolution_notes = notes
+        if new_status == 'resolved' and request.FILES.get('completion_image'):
+            c.completion_image = request.FILES['completion_image']
+        c.save()
+        _log(c, new_status, u, notes or f'Status changed to {new_status} by {u.get_full_name()}.')
+
+        if new_status == 'resolved':
+            _notify(c.citizen, 'Issue Resolved!', f'Your complaint "{c.title}" has been resolved. Please rate the resolution.', 'complaint_resolved', c)
+        elif new_status == 'rejected':
+            _notify(c.citizen, 'Complaint Rejected', f'Your complaint "{c.title}" has been rejected. Reason: {notes}', 'general', c)
+
+        messages.success(request, f'Status updated to {new_status}.')
+    return redirect('complaint_detail', pk=pk)

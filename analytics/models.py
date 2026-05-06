@@ -1,3 +1,1 @@
-from django.db import models
-
-# Create your models here.
+# Legacy app — kept for structural compatibility. No active models.

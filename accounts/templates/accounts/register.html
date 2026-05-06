@@ -1,22 +1,83 @@
 {% extends 'base.html' %}
+{% block title %}Create Account{% endblock %}
 {% block content %}
-
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card p-5 shadow-lg" style="width: 400px; border-radius: 20px;">
-
-        <h2 class="text-center mb-3">Register</h2>
-
-        <form method="POST">
-            {% csrf_token %}
-
-            <input class="form-control mb-3" type="text" name="username" placeholder="Username">
-
-            <input class="form-control mb-3" type="password" name="password" placeholder="Password">
-
-            <button class="btn btn-dark w-100">Register</button>
-        </form>
-
+<div style="min-height:calc(100vh - 58px);display:flex;align-items:center;justify-content:center;padding:2rem">
+  <div style="width:100%;max-width:560px">
+    <div class="tc mb3">
+      <h2 style="font-size:1.5rem;margin-bottom:.4rem">Create your account</h2>
+      <p class="sm muted">Join CivicEye and help make Bangladesh's cities better</p>
     </div>
+    <div class="card">
+      {% if messages %}{% for msg in messages %}
+      <div class="alert {% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} mb2">{{ msg }}</div>
+      {% endfor %}{% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="fg">
+            <label class="label" for="id_fname">First Name <span>*</span></label>
+            <input class="input" type="text" name="first_name" id="id_fname" value="{{ post.first_name|default:'' }}" required>
+          </div>
+          <div class="fg">
+            <label class="label" for="id_lname">Last Name</label>
+            <input class="input" type="text" name="last_name" id="id_lname" value="{{ post.last_name|default:'' }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="label" for="id_uname">Username <span>*</span></label>
+          <input class="input" type="text" name="username" id="id_uname" value="{{ post.username|default:'' }}" required autocomplete="username">
+        </div>
+        <div class="fg">
+          <label class="label" for="id_email">Email</label>
+          <input class="input" type="email" name="email" id="id_email" value="{{ post.email|default:'' }}" autocomplete="email">
+        </div>
+        <div class="fg">
+          <label class="label" for="id_phone">Phone</label>
+          <input class="input" type="tel" name="phone" id="id_phone" value="{{ post.phone|default:'' }}" placeholder="+880...">
+        </div>
+        <div class="fg">
+          <label class="label">Account Type <span>*</span></label>
+          <div class="role-grid">
+            <input class="role-r" type="radio" name="role" id="r_citizen" value="citizen" {% if post.role == 'citizen' or not post.role %}checked{% endif %}>
+            <label class="role-l" for="r_citizen"><span style="font-size:1.3rem">🏘️</span>Citizen</label>
+            <input class="role-r" type="radio" name="role" id="r_surveyor" value="surveyor" {% if post.role == 'surveyor' %}checked{% endif %}>
+            <label class="role-l" for="r_surveyor"><span style="font-size:1.3rem">🔍</span>Surveyor</label>
+            <input class="role-r" type="radio" name="role" id="r_worker" value="worker" {% if post.role == 'worker' %}checked{% endif %}>
+            <label class="role-l" for="r_worker"><span style="font-size:1.3rem">🔧</span>Field Worker</label>
+            <input class="role-r" type="radio" name="role" id="r_tech" value="technician" {% if post.role == 'technician' %}checked{% endif %}>
+            <label class="role-l" for="r_tech"><span style="font-size:1.3rem">⚡</span>Technician</label>
+            <input class="role-r" type="radio" name="role" id="r_admin" value="admin" {% if post.role == 'admin' %}checked{% endif %}>
+            <label class="role-l" for="r_admin"><span style="font-size:1.3rem">🏛️</span>Dept Admin</label>
+          </div>
+        </div>
+        <div class="fg" id="dept-field">
+          <label class="label" for="id_dept">Department</label>
+          <select class="select" name="department" id="id_dept">
+            <option value="">— Select your department —</option>
+            {% regroup departments by city_corp as corp_list %}
+            {% for corp in corp_list %}
+            <optgroup label="{{ corp.grouper }}">
+              {% for d in corp.list %}<option value="{{ d.id }}" {% if post.department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label class="label" for="id_pw1">Password <span>*</span></label>
+            <input class="input" type="password" name="password1" id="id_pw1" required autocomplete="new-password">
+          </div>
+          <div class="fg">
+            <label class="label" for="id_pw2">Confirm Password <span>*</span></label>
+            <input class="input" type="password" name="password2" id="id_pw2" required autocomplete="new-password">
+          </div>
+        </div>
+        <p class="hint mb2">Password must be at least 6 characters.</p>
+        <button type="submit" class="btn btn-pr btn-full">Create Account</button>
+      </form>
+      <div class="hr"></div>
+      <p class="tc sm muted">Already have an account? <a href="{% url 'login' %}" class="text-pr semi">Sign in</a></p>
+    </div>
+  </div>
 </div>
-
 {% endblock %}

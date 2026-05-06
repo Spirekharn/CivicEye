@@ -1,0 +1,67 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Submit Survey{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div><h1>Survey Report</h1><p class="sub">{{ c.title|truncatechars:60 }}</p></div>
+  <a href="{% url 'complaint_detail' c.pk %}" class="btn btn-outline">&larr; Back</a>
+</div>
+<div class="g2" style="align-items:start">
+  <div class="card">
+    {% if messages %}{% for msg in messages %}<div class="alert danger mb2">{{ msg }}</div>{% endfor %}{% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="fg">
+        <label class="label">Findings &amp; Observations <span style="color:var(--r)">*</span></label>
+        <textarea class="textarea" name="findings" rows="5" placeholder="Describe what you observed on-site. Include severity, scope, and safety concerns." required></textarea>
+      </div>
+      <div class="fg">
+        <label class="label">Materials Needed</label>
+        <textarea class="textarea" name="materials_needed" rows="3" placeholder="List required materials and quantities..."></textarea>
+      </div>
+      <h5 class="mb2 mt2">Cost Estimate (BDT)</h5>
+      <div class="form-row">
+        <div class="fg">
+          <label class="label">Labour Cost</label>
+          <input class="input" type="number" name="labor_estimate" min="0" step="100" value="0">
+        </div>
+        <div class="fg">
+          <label class="label">Equipment Cost</label>
+          <input class="input" type="number" name="equipment_estimate" min="0" step="100" value="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="label">Miscellaneous</label>
+          <input class="input" type="number" name="misc_estimate" min="0" step="100" value="0">
+        </div>
+        <div class="fg">
+          <label class="label">Estimated Days</label>
+          <input class="input" type="number" name="estimated_days" min="1" max="365" value="3">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="label">Priority Recommendation</label>
+        <select class="select" name="priority_recommendation">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="label">Survey Photo (optional)</label>
+        <input class="input" type="file" name="survey_image" accept="image/*" style="padding:.5rem">
+      </div>
+      <button type="submit" class="btn btn-pr btn-full">Submit Survey Report</button>
+    </form>
+  </div>
+  <div class="card">
+    <h4 class="mb2">Complaint Info</h4>
+    <p class="sm mb1"><strong>Category:</strong> {{ c.get_category_display }}</p>
+    <p class="sm mb1"><strong>Location:</strong> {{ c.location_text }}</p>
+    <p class="sm mb1"><strong>Priority:</strong> <span class="badge b-{{ c.priority }}">{{ c.priority }}</span></p>
+    <p class="sm mb2">{{ c.description }}</p>
+    {% if c.image %}<img src="{{ c.image.url }}" style="max-width:100%;border-radius:8px" alt="Evidence photo">{% endif %}
+  </div>
+</div>
+{% endblock %}

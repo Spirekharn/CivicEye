@@ -1,0 +1,36 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Allocate Budget{% endblock %}
+{% block content %}
+<div class="pg-hdr"><div><h1>Allocate Budget</h1><p class="sub">Assign annual budget to a department</p></div><a href="{% url 'finance_dashboard' %}" class="btn btn-outline">&larr; Finance</a></div>
+<div style="max-width:600px">
+  <div class="card">
+    {% if messages %}{% for msg in messages %}<div class="alert {% if msg.tags == 'error' %}danger{% else %}success{% endif %} mb2">{{ msg }}</div>{% endfor %}{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="fg">
+        <label class="label">Department <span style="color:var(--r)">*</span></label>
+        <select class="select" name="department" required>
+          <option value="">— Select department —</option>
+          {% regroup departments by city_corp as clist %}
+          {% for corp in clist %}<optgroup label="{{ corp.grouper }}">{% for d in corp.list %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</optgroup>{% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="label">Fiscal Year <span style="color:var(--r)">*</span></label>
+          <input class="input" type="text" name="fiscal_year" value="2025-2026" placeholder="2025-2026" required>
+        </div>
+        <div class="fg">
+          <label class="label">Amount (BDT) <span style="color:var(--r)">*</span></label>
+          <input class="input" type="number" name="allocated_amount" min="0" step="1000" placeholder="e.g. 5000000" required>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="label">Notes</label>
+        <textarea class="textarea" name="notes" rows="3" placeholder="Budget allocation notes..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-pr btn-full">Allocate Budget</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

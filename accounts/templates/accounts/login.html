@@ -1,40 +1,32 @@
 {% extends 'base.html' %}
+{% block title %}Sign In{% endblock %}
 {% block content %}
-
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card p-5 shadow-lg" style="width: 400px; border-radius: 20px;">
-
-        <h2 class="text-center mb-3">Welcome Back</h2>
-        <p class="text-center text-muted">Your tactile interface</p>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-danger">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="POST">
-            {% csrf_token %}
-
-            <select name="role" class="form-control mb-3">
-                <option value="citizen">Citizen</option>
-                <option value="worker">Worker</option>
-                <option value="admin">Admin</option>
-            </select>
-
-            <input class="form-control mb-3" type="text" name="username" placeholder="Username">
-
-            <input class="form-control mb-3" type="password" name="password" placeholder="Password">
-
-            <button class="btn btn-dark w-100">Enter the Atmosphere</button>
-        </form>
-
-        <p class="text-center mt-3">
-            Don't have an account?
-            <a href="/accounts/register/">Register here</a>
-        </p>
-
+<div style="min-height:calc(100vh - 58px);display:flex;align-items:center;justify-content:center;padding:2rem">
+  <div style="width:100%;max-width:420px">
+    <div class="tc mb3">
+      <div class="serif" style="font-size:2rem;font-style:italic;margin-bottom:.3rem"><em>Civic</em><strong style="font-style:normal;color:var(--pr)">Eye</strong></div>
+      <h2 style="font-size:1.4rem;margin-bottom:.4rem">Welcome back</h2>
+      <p class="sm muted">Sign in to your account to continue</p>
     </div>
+    <div class="card">
+      {% if messages %}{% for msg in messages %}
+      <div class="alert {% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} mb2">{{ msg }}</div>
+      {% endfor %}{% endif %}
+      <form method="post" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+        {% csrf_token %}
+        <div class="fg">
+          <label class="label" for="id_username">Username</label>
+          <input class="input" type="text" name="username" id="id_username" placeholder="Enter your username" required autofocus autocomplete="username">
+        </div>
+        <div class="fg">
+          <label class="label" for="id_password">Password</label>
+          <input class="input" type="password" name="password" id="id_password" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-pr btn-full" style="margin-top:.5rem">Sign In</button>
+      </form>
+      <div class="hr"></div>
+      <p class="tc sm muted">Don't have an account? <a href="{% url 'register' %}" class="text-pr semi">Create one</a></p>
+    </div>
+  </div>
 </div>
-
 {% endblock %}

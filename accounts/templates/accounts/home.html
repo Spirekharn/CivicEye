@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div style="position:relative;z-index:1;max-width:900px;margin:0 auto">
+    <div class="eyebrow">Bangladesh City Corporation Portal &middot; Est. 2026</div>
+    <h1>Your City.<br><strong>Your Voice.</strong><br>Heard &amp; Resolved.</h1>
+    <p class="hero-sub">CivicEye connects citizens directly to city corporations across Bangladesh — bringing accountability, transparency, and real resolution to every public service complaint.</p>
+    <div class="hero-actions">
+      <a href="{% url 'register' %}" class="btn btn-pr btn-xl">Report an Issue</a>
+      <a href="{% url 'about' %}" class="btn btn-outline btn-xl">How it works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hs"><div class="hs-n">{{ stats.resolved }}+</div><div class="hs-l">Resolved</div></div>
+      <div class="hs"><div class="hs-n">{{ stats.total }}</div><div class="hs-l">Total Reports</div></div>
+      <div class="hs"><div class="hs-n">{{ stats.departments }}</div><div class="hs-l">Departments</div></div>
+      <div class="hs"><div class="hs-n">10</div><div class="hs-l">City Corps</div></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:5.5rem 0;background:var(--surf);border-bottom:1px solid var(--bdr)">
+<div class="section">
+  <div class="g2" style="align-items:center;gap:5rem">
+    <div>
+      <div class="eyebrow" style="display:inline-flex;margin-bottom:1.1rem">Built for Bangladesh</div>
+      <h2 class="serif" style="margin-bottom:1.1rem;font-size:2rem">A civic platform built around <em style="color:var(--pr)">real governance</em></h2>
+      <p style="margin-bottom:1rem;line-height:1.82">Bangladesh's city corporations manage millions of citizens yet rely on manual, paper-based complaint systems. Issues go unreported. Reports disappear. Citizens lose trust.</p>
+      <p style="margin-bottom:1.8rem;line-height:1.82">CivicEye replaces this broken chain with a structured digital workflow — every complaint tracked, every decision logged, every taka of budget accounted for.</p>
+      <a href="{% url 'register' %}" class="btn btn-pr btn-lg">Start reporting &rarr;</a>
+    </div>
+    <div class="stagger">
+      <div class="card card-lift mb2" style="display:flex;gap:1rem;align-items:flex-start;padding:1.2rem 1.3rem">
+        <div style="font-size:1.5rem;flex-shrink:0;width:44px;text-align:center">📍</div>
+        <div><h5>Smart Location Routing</h5><p class="sm mt1">Type any area — Dhanmondi, Agrabad, Sylhet — your complaint auto-routes to the correct city corporation and department.</p></div>
+      </div>
+      <div class="card card-lift mb2" style="display:flex;gap:1rem;align-items:flex-start;padding:1.2rem 1.3rem">
+        <div style="font-size:1.5rem;flex-shrink:0;width:44px;text-align:center">🔄</div>
+        <div><h5>End-to-End Tracking</h5><p class="sm mt1">Follow every stage: submission, survey, budget approval, assignment, resolution — with a full audit trail throughout.</p></div>
+      </div>
+      <div class="card card-lift mb2" style="display:flex;gap:1rem;align-items:flex-start;padding:1.2rem 1.3rem">
+        <div style="font-size:1.5rem;flex-shrink:0;width:44px;text-align:center">⚖️</div>
+        <div><h5>Right Person, Right Job</h5><p class="sm mt1">Physical repairs go to trained Field Workers. Electrical and IT issues go to Technicians. Automatically filtered.</p></div>
+      </div>
+      <div class="card card-lift" style="display:flex;gap:1rem;align-items:flex-start;padding:1.2rem 1.3rem">
+        <div style="font-size:1.5rem;flex-shrink:0;width:44px;text-align:center">💰</div>
+        <div><h5>Transparent Finance</h5><p class="sm mt1">Every expense links to a complaint. Department budgets are tracked, approved, and publicly auditable.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section style="padding:5.5rem 0;border-bottom:1px solid var(--bdr)">
+<div class="section">
+  <div class="tc mb3">
+    <h2 class="serif" style="font-size:1.9rem">Who uses CivicEye?</h2>
+    <p style="margin-top:.7rem;max-width:480px;margin-left:auto;margin-right:auto">Six distinct roles — each with a purpose-built experience and clearly scoped access.</p>
+  </div>
+  <div class="gauto stagger">
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">🏘️</div><h4>Citizens</h4><p class="sm mt2">Report infrastructure issues, upload photos, track status live, and rate completed resolutions.</p></div>
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">🔍</div><h4>Surveyors</h4><p class="sm mt2">Inspect assigned issues on-site, submit formal reports with itemised cost estimates.</p></div>
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">🔧</div><h4>Field Workers</h4><p class="sm mt2">Physical repair crew for roads, water, sanitation, parks, fire, health, and building.</p></div>
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">⚡</div><h4>Technicians</h4><p class="sm mt2">Specialists for electricity, traffic signals, IT infrastructure, and CCTV networks.</p></div>
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">🏛️</div><h4>Dept. Admins</h4><p class="sm mt2">Manage one department: assign surveyors, approve budgets, dispatch workers, close issues.</p></div>
+    <div class="card card-lift"><div style="font-size:1.4rem;margin-bottom:.75rem">🛡️</div><h4>Super Admin</h4><p class="sm mt2">Full system oversight across all 10 city corporations, departments, and users.</p></div>
+  </div>
+</div>
+</section>
+
+<section style="padding:5.5rem 0;background:var(--surf);border-bottom:1px solid var(--bdr)">
+<div class="section">
+  <div class="tc mb3">
+    <h2 class="serif" style="font-size:1.9rem">12 Service Categories</h2>
+    <p style="margin-top:.7rem;max-width:480px;margin-left:auto;margin-right:auto">Every type of civic infrastructure issue is covered — from cracked roads to broken government networks.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem" class="stagger">
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🛣️</span><span class="sm semi">Roads &amp; Infrastructure</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>💧</span><span class="sm semi">Water &amp; Sewerage</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>⚡</span><span class="sm semi">Electricity &amp; Lights</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🗑️</span><span class="sm semi">Sanitation &amp; Waste</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🌳</span><span class="sm semi">Parks &amp; Recreation</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🏥</span><span class="sm semi">Public Health</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🏗️</span><span class="sm semi">Building &amp; Construction</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🚌</span><span class="sm semi">Transport &amp; Traffic</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🌊</span><span class="sm semi">Environment &amp; Drainage</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🚒</span><span class="sm semi">Fire &amp; Emergency</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>💻</span><span class="sm semi">IT &amp; Technology</span></div>
+    <div class="card" style="padding:.9rem 1rem;display:flex;gap:.75rem;align-items:center"><span>🏛️</span><span class="sm semi">Administration</span></div>
+  </div>
+</div>
+</section>
+
+<section style="padding:5.5rem 0">
+<div class="section tc">
+  <h2 class="serif" style="font-size:1.9rem;margin-bottom:.9rem">Ready to make your city better?</h2>
+  <p style="max-width:440px;margin:0 auto 2.2rem;line-height:1.75">Register today and report your first issue. City corporations across Bangladesh are ready to respond.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="{% url 'register' %}" class="btn btn-pr btn-xl">Create Free Account</a>
+    <a href="{% url 'login' %}" class="btn btn-outline btn-xl">Sign In</a>
+  </div>
+</div>
+</section>
+{% endblock %}
