@@ -28,6 +28,15 @@
   </div>
 </div>
 
+{% if c.is_duplicate %}
+<div class="alert warning mb2">
+  This complaint was automatically identified as a duplicate.
+  {% if c.duplicate_of %}
+  <a href="{% url 'complaint_detail' c.duplicate_of.pk %}" style="margin-left:.5rem;font-weight:600">View primary complaint #{{ c.duplicate_of.pk }}</a>
+  {% endif %}
+</div>
+{% endif %}
+
 <!-- Progress strip -->
 <div class="card mb2" style="padding:1.2rem 1.5rem">
   <div class="flex-b mb2">
@@ -73,6 +82,16 @@
         {% endif %}
         {% if c.assigned_worker %}
         <div><div class="xxs muted bold mono mb1">ASSIGNED TO</div><div class="sm">{{ c.assigned_worker.get_full_name }} <span class="badge b-brass">{{ c.assigned_worker.get_role_display }}</span></div></div>
+        {% endif %}
+        {% if co_reporters %}
+        <div style="grid-column:1/-1">
+          <div class="xxs muted bold mono mb1">CO-REPORTERS</div>
+          <div class="flex-c gap-1" style="flex-wrap:wrap">
+            {% for r in co_reporters %}
+            <span class="badge b-teal">{{ r.get_full_name|default:r.username }}</span>
+            {% endfor %}
+          </div>
+        </div>
         {% endif %}
       </div>
       {% if c.image %}
@@ -132,7 +151,7 @@
       {% if expense.rejection_reason %}
       <div class="alert danger mt2"><p class="sm" style="color:inherit">{{ expense.rejection_reason }}</p></div>
       {% endif %}
-      {% if user.role == 'admin' or user.role == 'super_admin' %}
+      {% if user.role == 'finance' or user.role == 'super_admin' %}
       {% if expense.status == 'pending' %}
       <div class="mt2 flex-c gap-1">
         <a href="{% url 'approve_expense' expense.pk %}?action=approve" class="btn btn-green btn-sm">Approve Budget</a>
@@ -182,11 +201,11 @@
         <div class="fg">
           <label class="label">Rating</label>
           <select class="select" name="rating">
-            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-            <option value="4">⭐⭐⭐⭐ Good</option>
-            <option value="3" selected>⭐⭐⭐ Average</option>
-            <option value="2">⭐⭐ Poor</option>
-            <option value="1">⭐ Very Poor</option>
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3" selected>3 - Average</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Very Poor</option>
           </select>
         </div>
         <div class="fg">
@@ -201,7 +220,7 @@
       <h4 class="mb1">Your Feedback</h4>
       <div class="flex-c gap-1 mb1">
         {% for i in '12345'|make_list %}
-        <span style="color:{% if forloop.counter <= feedback.rating %}var(--br){% else %}var(--bdr){% endif %}">★</span>
+        <span style="color:{% if forloop.counter <= feedback.rating %}var(--br){% else %}var(--bdr){% endif %}">&#9733;</span>
         {% endfor %}
         <span class="xs muted">({{ feedback.rating }}/5)</span>
       </div>
@@ -243,6 +262,88 @@
     </div>
     {% endif %}
 
+    <!-- Transfer Request -->
+    {% if user.role == 'admin' and c.department == user.department %}
+    {% if pending_transfer %}
+    <div class="alert warning mb2">
+      Transfer to <strong>{{ pending_transfer.to_department.name }}</strong> is pending super admin review.
+      <span class="xs muted" style="margin-left:.5rem">Requested {{ pending_transfer.created_at|date:"d M Y" }}</span>
+    </div>
+    {% else %}
+    <div class="card mb2">
+      <h4 class="mb2">Request Transfer</h4>
+      <p class="sm muted mb2">Transfer this complaint to another department if it falls outside your scope.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="request_transfer">
+        <div class="fg">
+          <label class="label">Transfer To</label>
+          <select class="select" name="to_department" required>
+            <option value="">Select department...</option>
+            {% regroup departments by city_corp as corp_list %}
+            {% for corp in corp_list %}
+            <optgroup label="{{ corp.grouper }}">
+              {% for d in corp.list %}
+              {% if d != c.department %}
+              <option value="{{ d.pk }}">{{ d.name }}</option>
+              {% endif %}
+              {% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="fg">
+          <label class="label">Reason</label>
+          <textarea class="textarea" name="reason" rows="3" placeholder="Explain why this complaint should be transferred..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-outline btn-full">Submit Transfer Request</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Transfer history for super_admin -->
+    {% if user.role == 'super_admin' and transfer_requests %}
+    <div class="card mb2">
+      <h4 class="mb2">Transfer Requests</h4>
+      {% for tr in transfer_requests %}
+      <div style="padding:.6rem 0;border-bottom:1px solid var(--bdr)">
+        <div class="flex-b">
+          <span class="sm semi">{{ tr.from_department.name }} &rarr; {{ tr.to_department.name }}</span>
+          {% if tr.status == 'pending' %}<span class="badge b-transfer-pending">Pending</span>
+          {% elif tr.status == 'approved' %}<span class="badge b-transfer-approved">Approved</span>
+          {% else %}<span class="badge b-transfer-rejected">Rejected</span>{% endif %}
+        </div>
+        <div class="xs muted mt1">{{ tr.reason|truncatechars:100 }}</div>
+        <a href="{% url 'transfer_review' tr.pk %}" class="btn btn-sm btn-outline" style="margin-top:.4rem">
+          {% if tr.status == 'pending' %}Review{% else %}View{% endif %}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Manual Merge -->
+    {% if user.role == 'admin' or user.role == 'super_admin' %}
+    <div class="card mb2">
+      <h4 class="mb2">Manual Merge</h4>
+      <p class="sm muted mb2">Mark another complaint as a duplicate of this one. The other complaint's citizen will be added as a co-reporter here.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="manual_merge">
+        <div class="form-row">
+          <div class="fg">
+            <label class="label">Duplicate Complaint ID</label>
+            <input class="input" type="number" name="secondary_id" placeholder="e.g. 42" min="1" required>
+          </div>
+          <div class="fg" style="align-self:end">
+            <button type="submit" class="btn btn-outline btn-full">Merge</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
     <!-- Admin override -->
     {% if user.role == 'admin' or user.role == 'super_admin' %}
     <div class="card">
@@ -277,9 +378,31 @@
       <div class="timeline">
         {% for h in history %}
         <div class="tl-item">
+          {% if h.event_type == 'transfer_requested' %}
+          <div class="tl-dot amber"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">Transfer Requested</div>
+          {% elif h.event_type == 'transfer_approved' %}
+          <div class="tl-dot teal"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">Transfer Approved</div>
+          {% elif h.event_type == 'transfer_rejected' %}
+          <div class="tl-dot danger"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">Transfer Rejected</div>
+          {% elif h.event_type == 'merged_as_primary' %}
+          <div class="tl-dot teal"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">Merged (Primary)</div>
+          {% elif h.event_type == 'merged_as_duplicate' %}
+          <div class="tl-dot muted"></div>
+          <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
+          <div class="tl-text">Marked as Duplicate</div>
+          {% else %}
           <div class="tl-dot {% if h.status == 'resolved' or h.status == 'closed' %}done{% elif h.status == 'rejected' %}danger{% else %}active{% endif %}"></div>
           <div class="tl-time">{{ h.created_at|date:"d M Y, g:i A" }}</div>
           <div class="tl-text">{{ h.get_status_display }}</div>
+          {% endif %}
           {% if h.notes %}<div class="tl-sub">{{ h.notes }}</div>{% endif %}
           <div class="tl-sub">by {{ h.changed_by.get_full_name|default:h.changed_by.username }}</div>
         </div>
@@ -288,6 +411,17 @@
         {% endfor %}
       </div>
     </div>
+
+    {% if c.city_corp %}
+    <div class="card mt2">
+      <h4 class="mb2">Hotline</h4>
+      {% with hotline=HOTLINES|default_if_none:DEFAULT_HOTLINE %}
+      <div class="xs muted mb1">{{ c.get_city_corp_display|default:c.city_corp }}</div>
+      <div class="sm semi">{{ DEFAULT_HOTLINE.shortcode }}</div>
+      <div class="xs muted">Emergency: {{ DEFAULT_HOTLINE.emergency }}</div>
+      {% endwith %}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
