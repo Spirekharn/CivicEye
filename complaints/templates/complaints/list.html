@@ -46,7 +46,7 @@
   {% if complaints %}
   {% for c in complaints %}
   <a href="{% url 'complaint_detail' c.pk %}" class="cc">
-    <div class="cc-ico">{% if c.category == 'roads' %}🛣️{% elif c.category == 'water' %}💧{% elif c.category == 'electricity' %}⚡{% elif c.category == 'sanitation' %}🗑️{% elif c.category == 'parks' %}🌳{% elif c.category == 'health' %}🏥{% elif c.category == 'building' %}🏗️{% elif c.category == 'transport' %}🚌{% elif c.category == 'environment' %}🌊{% elif c.category == 'fire' %}🚒{% elif c.category == 'it' %}💻{% else %}🏛️{% endif %}</div>
+    <div class="cc-ico">{{ c.get_category_display|slice:":2" }}</div>
     <div style="flex:1;min-width:0">
       <div class="flex-b">
         <div class="semi sm trunc" style="max-width:60%">{{ c.title }}</div>

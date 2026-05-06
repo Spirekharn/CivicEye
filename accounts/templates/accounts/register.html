@@ -39,15 +39,15 @@
           <label class="label">Account Type <span>*</span></label>
           <div class="role-grid">
             <input class="role-r" type="radio" name="role" id="r_citizen" value="citizen" {% if post.role == 'citizen' or not post.role %}checked{% endif %}>
-            <label class="role-l" for="r_citizen"><span style="font-size:1.3rem">🏘️</span>Citizen</label>
+            <label class="role-l" for="r_citizen">Citizen</label>
             <input class="role-r" type="radio" name="role" id="r_surveyor" value="surveyor" {% if post.role == 'surveyor' %}checked{% endif %}>
-            <label class="role-l" for="r_surveyor"><span style="font-size:1.3rem">🔍</span>Surveyor</label>
+            <label class="role-l" for="r_surveyor">Surveyor</label>
             <input class="role-r" type="radio" name="role" id="r_worker" value="worker" {% if post.role == 'worker' %}checked{% endif %}>
-            <label class="role-l" for="r_worker"><span style="font-size:1.3rem">🔧</span>Field Worker</label>
+            <label class="role-l" for="r_worker">Field Worker</label>
             <input class="role-r" type="radio" name="role" id="r_tech" value="technician" {% if post.role == 'technician' %}checked{% endif %}>
-            <label class="role-l" for="r_tech"><span style="font-size:1.3rem">⚡</span>Technician</label>
+            <label class="role-l" for="r_tech">Technician</label>
             <input class="role-r" type="radio" name="role" id="r_admin" value="admin" {% if post.role == 'admin' %}checked{% endif %}>
-            <label class="role-l" for="r_admin"><span style="font-size:1.3rem">🏛️</span>Dept Admin</label>
+            <label class="role-l" for="r_admin">Dept Admin</label>
           </div>
         </div>
         <div class="fg" id="dept-field">

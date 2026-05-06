@@ -5,8 +5,10 @@
 <div class="card">
   {% for n in notifications %}
   <div style="display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-bottom:1px solid var(--bdr);{% if not n.is_read %}background:var(--pr-l);margin:0 -1.5rem;padding:1rem 1.5rem;{% endif %}">
-    <div style="font-size:1.2rem;flex-shrink:0">
-      {% if n.notification_type == 'complaint_resolved' %}✅{% elif n.notification_type == 'budget_approved' %}💰{% elif n.notification_type == 'worker_assigned' %}🔧{% elif n.notification_type == 'survey_done' %}🔍{% elif n.notification_type == 'budget_rejected' %}❌{% else %}🔔{% endif %}
+    <div style="flex-shrink:0;width:28px;height:28px;border-radius:6px;background:var(--pr-l);display:flex;align-items:center;justify-content:center">
+      <span class="xxs bold mono" style="color:var(--pr)">
+        {% if n.notification_type == 'complaint_resolved' %}OK{% elif n.notification_type == 'budget_approved' %}BDG{% elif n.notification_type == 'worker_assigned' %}ASN{% elif n.notification_type == 'survey_done' %}SRV{% elif n.notification_type == 'budget_rejected' %}REJ{% else %}NTF{% endif %}
+      </span>
     </div>
     <div style="flex:1">
       <div class="flex-b">
@@ -20,7 +22,7 @@
     </div>
     {% if not n.is_read %}<div style="width:8px;height:8px;border-radius:50%;background:var(--pr);flex-shrink:0;margin-top:4px"></div>{% endif %}
   </div>
-  {% empty %}<div class="empty"><div class="empty-ico">🔔</div><h3>No notifications</h3><p class="sm mt1">You'll be notified of all complaint updates here.</p></div>
+  {% empty %}<div class="empty"><div class="empty-ico">—</div><h3>No notifications</h3><p class="sm mt1">You'll be notified of all complaint updates here.</p></div>
   {% endfor %}
 </div>
 {% endblock %}
