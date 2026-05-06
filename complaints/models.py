@@ -59,25 +59,26 @@ class Complaint(models.Model):
     status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     priority    = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
 
-    # Who filed it and where it belongs
     citizen     = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='complaints')
     department  = models.ForeignKey('departments.Department', null=True, blank=True, on_delete=models.SET_NULL, related_name='complaints')
-    city_corp   = models.CharField(max_length=10, blank=True)  # auto-filled from location
+    city_corp   = models.CharField(max_length=10, blank=True)
 
-    # Location
     location_text = models.CharField(max_length=300)
     latitude      = models.FloatField(null=True, blank=True)
     longitude     = models.FloatField(null=True, blank=True)
 
-    # Staff assignments
     assigned_surveyor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_assignments')
     assigned_worker   = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='work_assignments')
 
-    # Media evidence
-    image = models.ImageField(upload_to='complaints/images/', null=True, blank=True)
+    co_reporters = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='co_reported_complaints',
+    )
+
+    image            = models.ImageField(upload_to='complaints/images/', null=True, blank=True)
     completion_image = models.ImageField(upload_to='complaints/completion/', null=True, blank=True)
 
-    # Flags
     is_anonymous = models.BooleanField(default=False)
     is_duplicate = models.BooleanField(default=False)
     duplicate_of = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
@@ -100,15 +101,50 @@ class Complaint(models.Model):
         return CATEGORY_WORKER_TYPE.get(self.category, 'worker')
 
 
+EVENT_TYPE_CHOICES = [
+    ('status_change',       'Status Change'),
+    ('transfer_requested',  'Transfer Requested'),
+    ('transfer_approved',   'Transfer Approved'),
+    ('transfer_rejected',   'Transfer Rejected'),
+    ('merged_as_primary',   'Merged (Primary)'),
+    ('merged_as_duplicate', 'Merged (Duplicate)'),
+]
+
+
 class ComplaintStatusHistory(models.Model):
     complaint  = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='history')
     status     = models.CharField(max_length=20, choices=STATUS_CHOICES)
     notes      = models.TextField(blank=True)
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPE_CHOICES, default='status_change')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['created_at']
+
+
+class ComplaintTransferRequest(models.Model):
+    TRANSFER_STATUS = [
+        ('pending',  'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    complaint        = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='transfer_requests')
+    from_department  = models.ForeignKey('departments.Department', on_delete=models.CASCADE, related_name='outgoing_transfers')
+    to_department    = models.ForeignKey('departments.Department', on_delete=models.CASCADE, related_name='incoming_transfers')
+    reason           = models.TextField()
+    status           = models.CharField(max_length=10, choices=TRANSFER_STATUS, default='pending')
+    requested_by     = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transfer_requests_made')
+    reviewed_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='transfer_requests_reviewed')
+    rejection_reason = models.TextField(blank=True)
+    created_at       = models.DateTimeField(auto_now_add=True)
+    updated_at       = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Transfer #{self.pk}: {self.complaint} to {self.to_department}"
 
 
 class SurveyReport(models.Model):

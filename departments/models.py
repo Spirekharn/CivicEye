@@ -12,6 +12,8 @@ CITY_CORP_CHOICES = [
     ('NCC',  'Narayanganj City Corporation'),
     ('GCC',  'Gazipur City Corporation'),
     ('MCC',  'Mymensingh City Corporation'),
+    ('COCC', 'Cumilla City Corporation'),
+    ('RNCC', 'Rangpur City Corporation'),
 ]
 
 SLUG_CHOICES = [

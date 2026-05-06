@@ -51,6 +51,14 @@ BD_LOCATION_MAP = {
 
     # Mymensingh City Corporation (MCC)
     'mymensingh': 'MCC',
+
+    # Cumilla City Corporation (COCC)
+    'cumilla': 'COCC', 'comilla': 'COCC', 'kandirpar': 'COCC',
+    'tomsom bridge': 'COCC', 'shasan': 'COCC', 'cumilla sadar': 'COCC',
+
+    # Rangpur City Corporation (RNCC)
+    'rangpur': 'RNCC', 'mahiganj': 'RNCC', 'modern more': 'RNCC',
+    'rangpur sadar': 'RNCC', 'shapla chattar': 'RNCC',
 }
 
 

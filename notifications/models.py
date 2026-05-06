@@ -13,6 +13,11 @@ class Notification(models.Model):
         ('worker_assigned',     'Worker Assigned'),
         ('complaint_resolved',  'Complaint Resolved'),
         ('duplicate_found',     'Duplicate Detected'),
+        ('transfer_requested',  'Transfer Requested'),
+        ('transfer_approved',   'Transfer Approved'),
+        ('transfer_rejected',   'Transfer Rejected'),
+        ('complaint_merged',    'Complaint Merged'),
+        ('co_reporter_added',   'Added as Co-Reporter'),
         ('general',             'General'),
     ]
     user              = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
