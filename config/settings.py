@@ -98,6 +98,27 @@ LOGOUT_REDIRECT_URL = '/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CITY_CORP_HOTLINES = {
+    'DNCC': {
+        'name': 'Dhaka North City Corporation',
+        'shortcode': '16106',
+        'numbers': ['09602222333', '09602222334'],
+        'emergency': '999',
+    },
+    'DSCC': {
+        'name': 'Dhaka South City Corporation',
+        'shortcode': '333',
+        'numbers': [],
+        'emergency': '999',
+    },
+    'default': {
+        'name': 'National Helpline',
+        'shortcode': '333',
+        'numbers': [],
+        'emergency': '999',
+    },
+}
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() in {'1', 'true', 'yes', 'on'}
     SESSION_COOKIE_SECURE = True

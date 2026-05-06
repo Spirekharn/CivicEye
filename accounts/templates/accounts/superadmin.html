@@ -2,13 +2,22 @@
 {% block title %}Super Admin{% endblock %}
 {% block content %}
 <div class="pg-hdr">
-  <div><h1>Super Admin Panel</h1><p class="sub">System-wide oversight — all city corporations</p></div>
+  <div><h1>Super Admin Panel</h1><p class="sub">System-wide oversight &mdash; all city corporations</p></div>
   <div class="pg-actions">
-    <a href="{% url 'admin_users' %}" class="btn btn-pr">Allocate Departments</a>
-    <a href="/admin/" class="btn btn-amber">Django Admin</a>
+    <a href="{% url 'admin_users' %}" class="btn btn-pr">Manage Users</a>
+    <a href="{% url 'transfer_list' %}" class="btn btn-outline">Transfers</a>
     <a href="{% url 'admin_complaints' %}" class="btn btn-outline">All Complaints</a>
+    <a href="/admin/" class="btn btn-amber">Django Admin</a>
   </div>
 </div>
+
+{% if pending_transfers > 0 %}
+<div class="alert warning mb3">
+  <strong>{{ pending_transfers }}</strong> pending transfer request{{ pending_transfers|pluralize }} require your review.
+  <a href="{% url 'transfer_list' %}?status=pending" style="margin-left:.5rem;font-weight:600">Review now</a>
+</div>
+{% endif %}
+
 <div class="stats stagger">
   <div class="stat"><div class="stat-l">Total Complaints</div><div class="stat-v mono">{{ all_complaints }}</div></div>
   <div class="stat stat-amber"><div class="stat-l">Pending</div><div class="stat-v mono">{{ pending }}</div></div>
@@ -16,8 +25,8 @@
   <div class="stat stat-green"><div class="stat-l">Resolved</div><div class="stat-v mono">{{ resolved }}</div></div>
   <div class="stat"><div class="stat-l">Total Users</div><div class="stat-v mono">{{ total_users }}</div></div>
   <div class="stat"><div class="stat-l">Departments</div><div class="stat-v mono">{{ total_depts }}</div></div>
-  <div class="stat"><div class="stat-l">Budget Allocated</div><div class="stat-v mono" style="font-size:1.2rem">৳{{ total_budget|floatformat:0 }}</div></div>
-  <div class="stat stat-amber"><div class="stat-l">Budget Spent</div><div class="stat-v mono" style="font-size:1.2rem">৳{{ total_spent|floatformat:0 }}</div></div>
+  <div class="stat"><div class="stat-l">Budget Allocated</div><div class="stat-v mono" style="font-size:1.2rem">{{ total_budget|floatformat:0 }}</div><div class="stat-n">BDT</div></div>
+  <div class="stat stat-amber"><div class="stat-l">Budget Spent</div><div class="stat-v mono" style="font-size:1.2rem">{{ total_spent|floatformat:0 }}</div><div class="stat-n">BDT</div></div>
 </div>
 
 {% if corp_stats %}
@@ -39,7 +48,13 @@
     {% for u in recent_users %}
     <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--bdr)">
       <div class="avatar xs">{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}</div>
-      <div style="flex:1"><div class="sm semi">{{ u.get_full_name|default:u.username }}</div><div class="xs muted">{{ u.get_role_display }}</div></div>
+      <div style="flex:1">
+        <div class="sm semi">
+          {{ u.get_full_name|default:u.username }}
+          {% if u.is_department_head %}<span class="badge b-dept-head" style="margin-left:.3rem">Head</span>{% endif %}
+        </div>
+        <div class="xs muted">{{ u.get_role_display }}</div>
+      </div>
       <div class="xs mono muted">{{ u.date_joined|date:"d M" }}</div>
     </div>
     {% endfor %}

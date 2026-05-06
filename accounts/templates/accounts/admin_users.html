@@ -22,25 +22,55 @@
     {% if search or role_filter %}<a href="{% url 'admin_users' %}" class="btn btn-outline">Clear</a>{% endif %}
   </form>
 </div>
-<div class="card">
+<div class="card" style="padding:0">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>User</th><th>Role</th><th>Department</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Department</th>
+          <th>Email</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
       <tbody>
       {% for u in users %}
       <tr>
         <td>
           <div class="flex-c gap-1">
             <div class="avatar xs">{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}</div>
-            <div><div class="sm semi">{{ u.get_full_name|default:u.username }}</div><div class="xs muted mono">@{{ u.username }}</div></div>
+            <div>
+              <div class="sm semi">
+                {{ u.get_full_name|default:u.username }}
+                {% if u.is_department_head %}<span class="badge b-dept-head" style="margin-left:.35rem">Head</span>{% endif %}
+              </div>
+              <div class="xs muted mono">@{{ u.username }}</div>
+            </div>
           </div>
         </td>
-        <td><span class="badge b-teal">{{ u.get_role_display }}</span></td>
-        <td class="xs muted">
-          {% if request.user.role == 'super_admin' and u.role != 'citizen' and u.role != 'super_admin' %}
-          <form method="post" action="{% url 'update_user_department' u.pk %}" style="display:flex;gap:.45rem;align-items:center;min-width:260px">
+        <td>
+          {% if request.user.role == 'super_admin' %}
+          <form method="post" action="{% url 'update_user_role' u.pk %}" style="display:flex;gap:.35rem;align-items:center">
             {% csrf_token %}
-            <select class="select" name="department" style="height:34px;padding:.35rem .65rem;font-size:.78rem">
+            <select class="select" name="role" style="height:32px;padding:.25rem .6rem;font-size:.78rem;min-width:130px">
+              {% for v,l in roles %}
+              <option value="{{ v }}" {% if u.role == v %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-pr btn-sm">Set</button>
+          </form>
+          {% else %}
+          <span class="badge b-teal">{{ u.get_role_display }}</span>
+          {% endif %}
+        </td>
+        <td class="xs muted">
+          {% if request.user.role == 'super_admin' and u.role != 'citizen' and u.role != 'super_admin' and u.role != 'finance' %}
+          <form method="post" action="{% url 'update_user_department' u.pk %}" style="display:flex;gap:.35rem;align-items:center">
+            {% csrf_token %}
+            <select class="select" name="department" style="height:32px;padding:.25rem .6rem;font-size:.78rem;min-width:180px">
               <option value="">No department</option>
               {% regroup departments by city_corp as corp_list %}
               {% for corp in corp_list %}
@@ -61,11 +91,24 @@
         <td class="xs mono muted">{{ u.date_joined|date:"d M Y" }}</td>
         <td><span class="badge {% if u.is_active %}b-green{% else %}b-rejected{% endif %}">{% if u.is_active %}Active{% else %}Inactive{% endif %}</span></td>
         <td>
-          {% if u != request.user %}
-          <a href="{% url 'toggle_user' u.pk %}" class="btn btn-outline btn-sm">
-            {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
-          </a>
-          {% endif %}
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+            {% if u != request.user %}
+            <form method="post" action="{% url 'toggle_user' u.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline btn-sm">
+                {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+              </button>
+            </form>
+            {% endif %}
+            {% if request.user.role == 'super_admin' and u.role == 'admin' %}
+            <form method="post" action="{% url 'toggle_dept_head' u.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm {% if u.is_department_head %}btn-outline{% else %}btn-outline{% endif %}" title="{% if u.is_department_head %}Remove as head{% else %}Set as department head{% endif %}">
+                {% if u.is_department_head %}Remove Head{% else %}Set Head{% endif %}
+              </button>
+            </form>
+            {% endif %}
+          </div>
         </td>
       </tr>
       {% empty %}<tr><td colspan="7" class="tc muted sm" style="padding:2rem">No users found.</td></tr>

@@ -16,7 +16,7 @@ def _notify(user, title, msg, ntype, complaint=None):
 
 @login_required
 def finance_dashboard(request):
-    if request.user.role not in ('admin', 'super_admin'):
+    if request.user.role not in ('admin', 'finance', 'super_admin'):
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     u = request.user
     fiscal = '2025-2026'
@@ -27,6 +27,7 @@ def finance_dashboard(request):
         expenses = Expense.objects.filter(fiscal_year=fiscal, department=u.department)
         depts = Department.objects.filter(id=u.department.id) if u.department else Department.objects.none()
     else:
+        # finance and super_admin see everything
         budgets = DepartmentBudget.objects.filter(fiscal_year=fiscal)
         pending = Expense.objects.filter(status='pending')
         expenses = Expense.objects.filter(fiscal_year=fiscal)
@@ -57,7 +58,8 @@ def finance_dashboard(request):
 
 @login_required
 def allocate_budget(request):
-    if request.user.role not in ('admin', 'super_admin'):
+    if request.user.role not in ('finance', 'super_admin'):
+        messages.error(request, 'Only Finance Officers can allocate budgets.')
         return redirect('dashboard')
     if request.method == 'POST':
         dept_id = request.POST.get('department')
@@ -66,9 +68,6 @@ def allocate_budget(request):
         notes   = request.POST.get('notes', '').strip()
         try:
             dept   = Department.objects.get(id=dept_id)
-            if request.user.role == 'admin' and dept != request.user.department:
-                messages.error(request, 'You can only allocate budget for your own department.')
-                return redirect('finance_dashboard')
             amount = float(amount)
             if amount <= 0: raise ValueError
             obj, created = DepartmentBudget.objects.update_or_create(
@@ -81,14 +80,12 @@ def allocate_budget(request):
             messages.error(request, f'Error: {e}')
 
     depts = Department.objects.filter(is_active=True).order_by('city_corp', 'name')
-    if request.user.role == 'admin' and request.user.department:
-        depts = depts.filter(id=request.user.department.id)
     return render(request, 'finance/allocate.html', {'departments': depts})
 
 
 @login_required
 def expense_list(request):
-    if request.user.role not in ('admin', 'super_admin'):
+    if request.user.role not in ('admin', 'finance', 'super_admin'):
         return redirect('dashboard')
     if request.user.role == 'admin':
         expenses = Expense.objects.filter(department=request.user.department).select_related('department', 'complaint')
@@ -99,12 +96,10 @@ def expense_list(request):
 
 @login_required
 def approve_expense(request, pk):
-    if request.user.role not in ('admin', 'super_admin'):
-        return redirect('dashboard')
-    expense = get_object_or_404(Expense, pk=pk)
-    if request.user.role == 'admin' and expense.department != request.user.department:
-        messages.error(request, 'Access denied.')
+    if request.user.role not in ('finance', 'super_admin'):
+        messages.error(request, 'Only Finance Officers can approve or reject expenses.')
         return redirect('finance_dashboard')
+    expense = get_object_or_404(Expense, pk=pk)
     action  = request.GET.get('action', 'approve')
 
     if action == 'approve':
