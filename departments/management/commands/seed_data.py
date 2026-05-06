@@ -24,6 +24,15 @@ CORPS = [
     ('DNCC', 'Dhaka North'),
     ('DSCC', 'Dhaka South'),
     ('CCC',  'Chattogram'),
+    ('KCC',  'Khulna'),
+    ('RCC',  'Rajshahi'),
+    ('BCC',  'Barishal'),
+    ('SCC',  'Sylhet'),
+    ('MCC',  'Mymensingh'),
+    ('GCC',  'Gazipur'),
+    ('NCC',  'Narayanganj'),
+    ('COCC', 'Cumilla'),
+    ('RNCC', 'Rangpur'),
 ]
 
 
@@ -64,6 +73,17 @@ class Command(BaseCommand):
                 first_name='DSCC', last_name='Admin', role='admin', department=dscc_roads)
             self.stdout.write(f'  Created admin_dscc -> {dscc_roads}')
 
+        # Finance officer (no department)
+        finance_user, created = User.objects.get_or_create(username='finance_officer')
+        finance_user.role = 'finance'
+        finance_user.department = None
+        finance_user.first_name = finance_user.first_name or 'Finance'
+        finance_user.last_name = finance_user.last_name or 'Officer'
+        finance_user.is_active = True
+        finance_user.set_password('Finance@123')
+        finance_user.save()
+        self.stdout.write(f'  {"Created" if created else "Updated"} finance_officer')
+
         demo_users = [
             ('Swagoto', '23101124', 'citizen', None, 'Swagoto', ''),
             ('qq', '123456', 'citizen', None, 'Citizen', ''),
@@ -91,10 +111,13 @@ class Command(BaseCommand):
                 defaults={'allocated_amount': match, 'allocated_by': sa}
             )
 
-        self.stdout.write(self.style.SUCCESS('\nSeed complete!'))
-        self.stdout.write('  SSNSTCE / SSNSTCE      (Super Admin)')
-        self.stdout.write('  Swagoto / 23101124    (Citizen)')
-        self.stdout.write('  qq / 123456           (Citizen)')
-        self.stdout.write('  Sujan / 23101120      (Technician)')
-        self.stdout.write('  Labib / 23101128      (Surveyor)')
-        self.stdout.write('  Lamiya / 23101132     (Field Worker)')
+        self.stdout.write(self.style.SUCCESS('\nSeed complete! Test accounts:'))
+        self.stdout.write('  SSNSTCE / SSNSTCE         (Super Admin)')
+        self.stdout.write('  finance_officer / Finance@123 (Finance Officer)')
+        self.stdout.write('  admin_dscc / Admin@123    (Dept Admin, DSCC Roads)')
+        self.stdout.write('  Swagoto / 23101124        (Citizen)')
+        self.stdout.write('  qq / 123456               (Citizen)')
+        self.stdout.write('  Sujan / 23101120          (Technician)')
+        self.stdout.write('  Labib / 23101128          (Surveyor)')
+        self.stdout.write('  Lamiya / 23101132         (Field Worker)')
+        self.stdout.write(f'\n  Departments seeded for all 12 city corporations.')

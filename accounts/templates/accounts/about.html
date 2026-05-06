@@ -7,10 +7,10 @@
   <div style="position:relative;z-index:1;max-width:820px;margin:0 auto;padding:0 2rem">
     <div class="eyebrow">University of Asia Pacific &middot; CSE 314 &middot; Group 02 &middot; Section C-1</div>
     <h1 class="serif" style="font-size:clamp(2.5rem,5vw,3.8rem);margin:1rem 0">Reimagining Civic Governance<br><em style="color:var(--pr)">for Bangladesh</em></h1>
-    <p style="max-width:600px;margin:0 auto 2.8rem;font-size:1.06rem;line-height:1.8">CivicEye is a transparent, accountable, and data-driven public service platform — connecting 10 city corporations, 12 service departments, and millions of citizens across Bangladesh.</p>
+    <p style="max-width:600px;margin:0 auto 2.8rem;font-size:1.06rem;line-height:1.8">CivicEye is a transparent, accountable, and data-driven public service platform — connecting 12 city corporations, 8 service departments, and millions of citizens across Bangladesh.</p>
     <div style="display:flex;justify-content:center;gap:3rem;flex-wrap:wrap">
       <div><div style="font-size:2.2rem;font-weight:800;color:var(--pr);letter-spacing:-.05em;font-family:var(--font-m)">{{ dept_count }}+</div><div class="xxs muted bold mono" style="text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem">Active Depts</div></div>
-      <div><div style="font-size:2.2rem;font-weight:800;color:var(--pr);letter-spacing:-.05em;font-family:var(--font-m)">10</div><div class="xxs muted bold mono" style="text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem">City Corps</div></div>
+      <div><div style="font-size:2.2rem;font-weight:800;color:var(--pr);letter-spacing:-.05em;font-family:var(--font-m)">12</div><div class="xxs muted bold mono" style="text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem">City Corps</div></div>
       <div><div style="font-size:2.2rem;font-weight:800;color:var(--pr);letter-spacing:-.05em;font-family:var(--font-m)">{{ complaint_count }}</div><div class="xxs muted bold mono" style="text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem">Complaints</div></div>
       <div><div style="font-size:2.2rem;font-weight:800;color:var(--pr);letter-spacing:-.05em;font-family:var(--font-m)">{{ resolved_count }}</div><div class="xxs muted bold mono" style="text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem">Resolved</div></div>
     </div>
@@ -39,7 +39,7 @@
 
 <section style="padding:5rem 0;border-bottom:1px solid var(--bdr)">
 <div class="section">
-  <div class="tc mb3"><h2 class="serif">10 City Corporations</h2><p style="max-width:480px;margin:.7rem auto 0">Full coverage of Bangladesh's major urban centers.</p></div>
+  <div class="tc mb3"><h2 class="serif">12 City Corporations</h2><p style="max-width:480px;margin:.7rem auto 0">Full coverage of Bangladesh's major urban centers.</p></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.8rem" class="stagger">
     {% for corp in corps %}
     <div class="card" style="padding:1rem 1.2rem;display:flex;align-items:center;gap:.85rem">
@@ -53,14 +53,16 @@
 
 <section style="padding:5rem 0;background:var(--surf);border-bottom:1px solid var(--bdr)">
 <div class="section">
-  <div class="tc mb3"><h2 class="serif">The 6-Role Hierarchy</h2><p style="max-width:460px;margin:.7rem auto 0">Every user has precisely defined responsibilities and access.</p></div>
+  <div class="tc mb3"><h2 class="serif">The 8-Role Hierarchy</h2><p style="max-width:460px;margin:.7rem auto 0">Every user has precisely defined responsibilities and access.</p></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.1rem" class="stagger">
     <div class="card" style="border-top:3px solid var(--pr)"><div class="flex-b mb1"><h4>Citizen</h4><span class="badge b-green">Public</span></div><p class="sm">Reports issues, tracks status live, rates resolutions. Can submit anonymously.</p></div>
     <div class="card" style="border-top:3px solid var(--t)"><div class="flex-b mb1"><h4>Surveyor</h4><span class="badge b-teal">Specialist</span></div><p class="sm">Inspects complaints on-site, submits formal reports with itemised cost estimates.</p></div>
     <div class="card" style="border-top:3px solid var(--o)"><div class="flex-b mb1"><h4>Field Worker</h4><span class="badge b-medium">Labour</span></div><p class="sm">Physical infrastructure work: roads, water, sanitation, parks, fire, health, building.</p></div>
     <div class="card" style="border-top:3px solid var(--br)"><div class="flex-b mb1"><h4>Technician</h4><span class="badge b-brass">Technical</span></div><p class="sm">Technical systems: electricity, street lights, traffic signals, IT, CCTV.</p></div>
-    <div class="card" style="border-top:3px solid var(--r)"><div class="flex-b mb1"><h4>Dept. Admin</h4><span class="badge b-high">Management</span></div><p class="sm">Scoped to one department. Assigns surveyors, approves budgets, dispatches workers.</p></div>
-    <div class="card" style="border-top:3px solid var(--pr)"><div class="flex-b mb1"><h4>Super Admin</h4><span class="badge b-green">System</span></div><p class="sm">Full access across all city corporations, departments, and users. Django admin.</p></div>
+    <div class="card" style="border-top:3px solid var(--r)"><div class="flex-b mb1"><h4>Dept. Admin</h4><span class="badge b-high">Management</span></div><p class="sm">Scoped to one department. Assigns surveyors, requests transfers, dispatches workers.</p></div>
+    <div class="card" style="border-top:3px solid var(--r)"><div class="flex-b mb1"><h4>Dept. Head</h4><span class="badge b-dept-head">Head</span></div><p class="sm">Designated department head. Receives incoming transfer notifications and leads the department.</p></div>
+    <div class="card" style="border-top:3px solid #1a6b8a"><div class="flex-b mb1"><h4>Finance Officer</h4><span class="badge b-finance">Finance</span></div><p class="sm">Reviews and approves expense requests, allocates annual budgets, monitors spending across all corps.</p></div>
+    <div class="card" style="border-top:3px solid var(--pr)"><div class="flex-b mb1"><h4>Super Admin</h4><span class="badge b-green">System</span></div><p class="sm">User and department management, budget allocation, transfer approvals, system-wide reporting.</p></div>
   </div>
 </div>
 </section>
@@ -101,13 +103,24 @@
 <div class="section">
   <div class="tc mb3"><h2 class="serif">The Team</h2><p style="max-width:420px;margin:.6rem auto 0">CSE 314 &middot; Software Engineering Lab &middot; 3rd Year, 2nd Semester</p></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.2rem" class="stagger">
+    {% load static %}
     {% for m in team %}
     <div class="card tc" style="padding:2.2rem 1.5rem">
-      <div style="width:76px;height:76px;border-radius:18px;background:linear-gradient(135deg,var(--pr),var(--t));color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 14px 28px rgba(30,86,49,.18);position:relative">
+      <div style="width:76px;height:76px;border-radius:18px;background:linear-gradient(135deg,var(--pr),var(--t));color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 14px 28px rgba(30,86,49,.18);position:relative;overflow:hidden">
+        {% if m.photo %}
+        <img src="{% static m.photo %}" alt="{{ m.name }}" style="width:100%;height:100%;object-fit:cover;border-radius:18px">
+        {% else %}
         <span style="font-size:1.35rem;font-weight:900;font-family:var(--font-m);letter-spacing:.04em">{{ m.abbr }}</span>
+        {% endif %}
         <span style="position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border-radius:50%;background:var(--surf);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;color:var(--pr);font-size:.75rem;font-weight:800">CE</span>
       </div>
-      <h4 style="margin-bottom:.3rem">{{ m.name }}</h4>
+      <h4 style="margin-bottom:.3rem">
+        {% if m.url %}
+        <a href="{{ m.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px solid var(--pr)">{{ m.name }}</a>
+        {% else %}
+        {{ m.name }}
+        {% endif %}
+      </h4>
       <div class="sm semi text-pr mb1">{{ m.role }}</div>
       <div class="xs muted mono">ID: {{ m.id }}</div>
     </div>
