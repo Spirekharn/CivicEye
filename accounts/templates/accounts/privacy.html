@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<div class="section" style="max-width:860px;padding:3rem 2rem">
+  <div class="pg-hdr">
+    <div>
+      <h1>Privacy Policy</h1>
+      <p class="sub">Last updated: May 2026</p>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">1. Information We Collect</h3>
+    <p class="mb2">When you register and use CivicEye, we collect the following information:</p>
+    <ul style="padding-left:1.5rem;color:var(--text2);line-height:2">
+      <li>Account information: name, username, email address, phone number</li>
+      <li>Complaint data: title, description, category, location text, and optional GPS coordinates</li>
+      <li>Images you upload as evidence for complaints</li>
+      <li>Feedback and ratings you submit after complaint resolution</li>
+    </ul>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">2. How We Use Your Information</h3>
+    <p class="mb2">Your information is used solely to operate the civic complaint management system:</p>
+    <ul style="padding-left:1.5rem;color:var(--text2);line-height:2">
+      <li>To route your complaint to the correct city corporation and department</li>
+      <li>To allow department staff to contact and update you on complaint progress</li>
+      <li>To send in-platform notifications at each stage of complaint resolution</li>
+      <li>To generate aggregated system statistics (no personal details are exposed)</li>
+    </ul>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">3. Anonymous Complaints</h3>
+    <p>If you submit a complaint with the "Submit anonymously" option enabled, your name will not be displayed on the complaint. However, your account must still be logged in to allow tracking and notifications. Your identity remains known to system administrators for abuse prevention.</p>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">4. Data Sharing</h3>
+    <p class="mb2">We do not sell or share your personal data with third parties. Complaint details are shared only with:</p>
+    <ul style="padding-left:1.5rem;color:var(--text2);line-height:2">
+      <li>Department administrators and staff responsible for resolving your complaint</li>
+      <li>Finance officers reviewing budget allocations linked to your complaint</li>
+      <li>System administrators for oversight and abuse prevention</li>
+    </ul>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">5. Data Retention</h3>
+    <p>Complaint records are retained for the duration of the academic project and may be used for system evaluation purposes. Personal account data is retained as long as your account is active.</p>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">6. Security</h3>
+    <p>Passwords are stored using industry-standard hashing. The platform uses HTTPS in production. Session cookies are secured and expire on logout. We do not store payment information of any kind.</p>
+  </div>
+
+  <div class="card">
+    <h3 class="mb2">7. Contact</h3>
+    <p>For any privacy-related questions, contact the project team via the <a href="{% url 'contact' %}">Contact page</a>.</p>
+  </div>
+</div>
+{% endblock %}

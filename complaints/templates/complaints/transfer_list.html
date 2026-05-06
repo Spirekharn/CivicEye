@@ -1,0 +1,73 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Transfer Requests{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <h1>Transfer Requests</h1>
+    <p class="sub">{{ total }} request{{ total|pluralize }} total</p>
+  </div>
+</div>
+
+<div class="flex-c gap-1 mb3">
+  <a href="{% url 'transfer_list' %}" class="btn {% if not status_filter %}btn-pr{% else %}btn-outline{% endif %} btn-sm">All</a>
+  <a href="{% url 'transfer_list' %}?status=pending" class="btn {% if status_filter == 'pending' %}btn-pr{% else %}btn-outline{% endif %} btn-sm">Pending</a>
+  <a href="{% url 'transfer_list' %}?status=approved" class="btn {% if status_filter == 'approved' %}btn-pr{% else %}btn-outline{% endif %} btn-sm">Approved</a>
+  <a href="{% url 'transfer_list' %}?status=rejected" class="btn {% if status_filter == 'rejected' %}btn-pr{% else %}btn-outline{% endif %} btn-sm">Rejected</a>
+</div>
+
+{% if transfers %}
+<div class="card" style="padding:0">
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Complaint</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Requested By</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tr in transfers %}
+        <tr>
+          <td>
+            <a href="{% url 'complaint_detail' tr.complaint.pk %}" class="semi">{{ tr.complaint.title|truncatechars:40 }}</a>
+            <div class="xs muted">#{{ tr.complaint.pk }}</div>
+          </td>
+          <td class="sm">{{ tr.from_department.name }}</td>
+          <td class="sm">{{ tr.to_department.name }}</td>
+          <td class="sm">{{ tr.requested_by.get_full_name|default:tr.requested_by.username }}</td>
+          <td class="xs muted mono">{{ tr.created_at|date:"d M Y" }}</td>
+          <td>
+            {% if tr.status == 'pending' %}
+              <span class="badge b-transfer-pending">Pending</span>
+            {% elif tr.status == 'approved' %}
+              <span class="badge b-transfer-approved">Approved</span>
+            {% else %}
+              <span class="badge b-transfer-rejected">Rejected</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if tr.status == 'pending' %}
+            <a href="{% url 'transfer_review' tr.pk %}" class="btn btn-sm btn-outline">Review</a>
+            {% else %}
+            <a href="{% url 'transfer_review' tr.pk %}" class="btn btn-sm btn-ghost">View</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <div class="empty-ico">—</div>
+  <h3>No transfer requests</h3>
+  <p>{% if status_filter %}No {{ status_filter }} requests found.{% else %}No transfer requests have been submitted yet.{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

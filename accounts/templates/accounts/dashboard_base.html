@@ -5,61 +5,84 @@
 
   <div class="sb-label">Navigation</div>
   <a href="{% url 'dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-    <span class="sb-icon">⊞</span> Dashboard
+    Dashboard
   </a>
 
   {% if user.role == 'citizen' %}
   <a href="{% url 'complaint_list' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_list' %}active{% endif %}">
-    <span class="sb-icon">📋</span> My Complaints
+    My Complaints
   </a>
   <a href="{% url 'complaint_create' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_create' %}active{% endif %}">
-    <span class="sb-icon">＋</span> Report Issue
+    Report Issue
+  </a>
+  <a href="{% url 'public_dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'public_dashboard' %}active{% endif %}">
+    System Stats
   </a>
 
   {% elif user.role == 'surveyor' %}
   <a href="{% url 'surveyor_queue' %}" class="sb-link {% if request.resolver_match.url_name == 'surveyor_queue' %}active{% endif %}">
-    <span class="sb-icon">🔍</span> My Queue
+    My Queue
   </a>
   <a href="{% url 'complaint_list' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_list' %}active{% endif %}">
-    <span class="sb-icon">📋</span> All Complaints
+    All Complaints
   </a>
 
   {% elif user.role == 'worker' or user.role == 'technician' %}
   <a href="{% url 'worker_tasks' %}" class="sb-link {% if request.resolver_match.url_name == 'worker_tasks' %}active{% endif %}">
-    <span class="sb-icon">🔧</span> My Tasks
+    My Tasks
   </a>
   <a href="{% url 'complaint_list' %}" class="sb-link">
-    <span class="sb-icon">📋</span> View Complaints
+    View Complaints
+  </a>
+
+  {% elif user.role == 'finance' %}
+  <div class="sb-label">Finance</div>
+  <a href="{% url 'finance_dashboard' %}" class="sb-link {% if 'finance' in request.resolver_match.url_name %}active{% endif %}">
+    Finance Dashboard
+  </a>
+  <a href="{% url 'expense_list' %}" class="sb-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+    Expenses
+  </a>
+  <a href="{% url 'allocate_budget' %}" class="sb-link {% if request.resolver_match.url_name == 'allocate_budget' %}active{% endif %}">
+    Allocate Budget
+  </a>
+  <a href="{% url 'admin_complaints' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
+    All Complaints
   </a>
 
   {% elif user.role == 'admin' or user.role == 'super_admin' %}
   <div class="sb-label">Management</div>
   <a href="{% url 'admin_complaints' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
-    <span class="sb-icon">📋</span> All Complaints
+    All Complaints
   </a>
+  {% if user.role == 'super_admin' %}
   <a href="{% url 'finance_dashboard' %}" class="sb-link {% if 'finance' in request.resolver_match.url_name %}active{% endif %}">
-    <span class="sb-icon">💰</span> Finance
+    Finance
   </a>
+  <a href="{% url 'transfer_list' %}" class="sb-link {% if request.resolver_match.url_name == 'transfer_list' %}active{% endif %}">
+    Transfers
+  </a>
+  {% endif %}
   <a href="{% url 'admin_users' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
-    <span class="sb-icon">👥</span> Users
+    Users
   </a>
   <a href="{% url 'department_list' %}" class="sb-link {% if 'department' in request.resolver_match.url_name %}active{% endif %}">
-    <span class="sb-icon">🏛️</span> Departments
+    Departments
   </a>
   {% if user.role == 'super_admin' %}
   <a href="{% url 'superadmin_dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
-    <span class="sb-icon">🛡️</span> Super Admin
+    Super Admin
   </a>
   {% endif %}
   {% endif %}
 
   <div class="sb-label">Account</div>
   <a href="{% url 'notification_list' %}" class="sb-link {% if request.resolver_match.url_name == 'notification_list' %}active{% endif %}">
-    <span class="sb-icon">🔔</span> Notifications
+    Notifications
     {% if unread_notif_count > 0 %}<span class="sb-badge">{{ unread_notif_count }}</span>{% endif %}
   </a>
   <a href="{% url 'profile' %}" class="sb-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-    <span class="sb-icon">⚙</span> Profile
+    Profile
   </a>
 
   <div class="sb-bottom">

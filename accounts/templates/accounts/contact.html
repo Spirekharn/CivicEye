@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Contact{% endblock %}
+{% block content %}
+<div class="section" style="max-width:860px;padding:3rem 2rem">
+  <div class="pg-hdr">
+    <div>
+      <h1>Contact Us</h1>
+      <p class="sub">Get in touch with the CivicEye team or your city corporation directly.</p>
+    </div>
+  </div>
+
+  <div class="g2 mb3">
+    <div class="card">
+      <h3 class="mb2">Project Team</h3>
+      <p class="mb2">For issues with the CivicEye platform itself, reach out to the development team.</p>
+      <div class="mb1"><span class="label">Institution</span><div>University of Asia Pacific</div></div>
+      <div class="mb1"><span class="label">Department</span><div>Computer Science &amp; Engineering</div></div>
+      <div class="mb1"><span class="label">Course</span><div>CSE 314 — Group 02, Section C-1</div></div>
+      <div class="mb1"><span class="label">Supervisor</span><div>Tanjina Helaly, Assistant Professor, CSE, UAP</div></div>
+    </div>
+
+    <div class="card">
+      <h3 class="mb2">Emergency &amp; Helplines</h3>
+      <div class="mb2">
+        <span class="label">National Emergency</span>
+        <div style="font-size:1.4rem;font-weight:700;color:var(--r)">999</div>
+      </div>
+      <div class="mb2">
+        <span class="label">National Helpline</span>
+        <div style="font-size:1.2rem;font-weight:600;color:var(--pr)">333</div>
+      </div>
+      <div class="mb2">
+        <span class="label">DNCC Hotline</span>
+        <div class="mono">16106</div>
+        <div class="xs muted">09602222333 &nbsp;|&nbsp; 09602222334</div>
+      </div>
+      <div>
+        <span class="label">DSCC Hotline</span>
+        <div class="mono">333</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2">City Corporation Contacts</h3>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>City Corporation</th>
+            <th>Area</th>
+            <th>Hotline</th>
+            <th>Emergency</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Dhaka North (DNCC)</td><td>Northern Dhaka</td><td>16106 / 09602222333</td><td>999</td></tr>
+          <tr><td>Dhaka South (DSCC)</td><td>Southern Dhaka</td><td>333</td><td>999</td></tr>
+          <tr><td>Chattogram (CCC)</td><td>Chattogram</td><td>333</td><td>999</td></tr>
+          <tr><td>Sylhet (SCC)</td><td>Sylhet</td><td>333</td><td>999</td></tr>
+          <tr><td>Rajshahi (RCC)</td><td>Rajshahi</td><td>333</td><td>999</td></tr>
+          <tr><td>Khulna (KCC)</td><td>Khulna</td><td>333</td><td>999</td></tr>
+          <tr><td>Barishal (BCC)</td><td>Barishal</td><td>333</td><td>999</td></tr>
+          <tr><td>Narayanganj (NCC)</td><td>Narayanganj</td><td>333</td><td>999</td></tr>
+          <tr><td>Gazipur (GCC)</td><td>Gazipur</td><td>333</td><td>999</td></tr>
+          <tr><td>Mymensingh (MCC)</td><td>Mymensingh</td><td>333</td><td>999</td></tr>
+          <tr><td>Cumilla (COCC)</td><td>Cumilla</td><td>333</td><td>999</td></tr>
+          <tr><td>Rangpur (RNCC)</td><td>Rangpur</td><td>333</td><td>999</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="mb1">Submit a Complaint</h3>
+    <p>For civic issues such as road damage, water supply, electricity faults, or sanitation problems — please use the platform directly.</p>
+    <div class="mt2">
+      <a href="{% url 'complaint_create' %}" class="btn btn-pr">Report an Issue</a>
+      <a href="{% url 'faq' %}" class="btn btn-outline" style="margin-left:.5rem">Read FAQ</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Review Transfer{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <h1>Review Transfer Request</h1>
+    <p class="sub">Transfer #{{ tr.pk }} &mdash; submitted {{ tr.created_at|date:"d M Y" }}</p>
+  </div>
+  <a href="{% url 'transfer_list' %}" class="btn btn-outline btn-sm">Back to Transfers</a>
+</div>
+
+<div class="card mb3">
+  <h3 class="mb2">Transfer Details</h3>
+  <div class="g2">
+    <div>
+      <div class="label">Complaint</div>
+      <a href="{% url 'complaint_detail' tr.complaint.pk %}" class="semi">{{ tr.complaint.title }}</a>
+      <div class="xs muted">#{{ tr.complaint.pk }} &middot; {{ tr.complaint.get_category_display }}</div>
+    </div>
+    <div>
+      <div class="label">Status</div>
+      {% if tr.status == 'pending' %}
+        <span class="badge b-transfer-pending">Pending Review</span>
+      {% elif tr.status == 'approved' %}
+        <span class="badge b-transfer-approved">Approved</span>
+      {% else %}
+        <span class="badge b-transfer-rejected">Rejected</span>
+      {% endif %}
+    </div>
+    <div>
+      <div class="label">From Department</div>
+      <div class="semi">{{ tr.from_department.name }}</div>
+      <div class="xs muted">{{ tr.from_department.get_city_corp_display }}</div>
+    </div>
+    <div>
+      <div class="label">To Department</div>
+      <div class="semi">{{ tr.to_department.name }}</div>
+      <div class="xs muted">{{ tr.to_department.get_city_corp_display }}</div>
+    </div>
+    <div>
+      <div class="label">Requested By</div>
+      <div>{{ tr.requested_by.get_full_name|default:tr.requested_by.username }}</div>
+      <div class="xs muted">{{ tr.requested_by.get_role_display }}</div>
+    </div>
+    <div>
+      <div class="label">Date Submitted</div>
+      <div class="mono sm">{{ tr.created_at|date:"d M Y, H:i" }}</div>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="label">Reason for Transfer</div>
+  <p style="margin-top:.4rem">{{ tr.reason }}</p>
+  {% if tr.rejection_reason %}
+  <div class="mt2">
+    <div class="label">Rejection Reason</div>
+    <p style="margin-top:.4rem;color:var(--r)">{{ tr.rejection_reason }}</p>
+  </div>
+  {% endif %}
+  {% if tr.reviewed_by %}
+  <div class="mt2 xs muted">Reviewed by {{ tr.reviewed_by.get_full_name|default:tr.reviewed_by.username }} on {{ tr.updated_at|date:"d M Y, H:i" }}</div>
+  {% endif %}
+</div>
+
+{% if tr.status == 'pending' %}
+<div class="g2">
+  <div class="card" style="border-top:3px solid var(--g)">
+    <h3 class="mb1" style="color:var(--g)">Approve Transfer</h3>
+    <p class="mb2 sm">The complaint will be moved to <strong>{{ tr.to_department.name }}</strong>. The receiving department will be notified.</p>
+    <form method="post" action="{% url 'transfer_review' tr.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="approve">
+      <button type="submit" class="btn btn-green btn-full">Approve Transfer</button>
+    </form>
+  </div>
+
+  <div class="card" style="border-top:3px solid var(--r)">
+    <h3 class="mb1" style="color:var(--r)">Reject Transfer</h3>
+    <p class="mb2 sm">The complaint will remain with <strong>{{ tr.from_department.name }}</strong>. Provide a reason below.</p>
+    <form method="post" action="{% url 'transfer_review' tr.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <div class="fg">
+        <label class="label" for="rejection_reason">Reason for Rejection <span>*</span></label>
+        <textarea name="rejection_reason" id="rejection_reason" class="textarea" rows="3" placeholder="Explain why this transfer is not being approved..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-red btn-full">Reject Transfer</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

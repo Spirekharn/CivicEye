@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}FAQ{% endblock %}
+{% block content %}
+<div class="section" style="max-width:860px;padding:3rem 2rem">
+  <div class="pg-hdr">
+    <div>
+      <h1>Frequently Asked Questions</h1>
+      <p class="sub">Everything you need to know about using CivicEye.</p>
+    </div>
+    <a href="{% url 'contact' %}" class="btn btn-outline btn-sm">Contact Us</a>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2" style="color:var(--pr);font-size:1rem;letter-spacing:.05em;text-transform:uppercase">About the Platform</h3>
+
+    <div class="mb3">
+      <h4>What is CivicEye?</h4>
+      <p class="mt1">CivicEye is a digital complaint management system for Bangladesh city corporations. Citizens can report civic issues — roads, water, electricity, sanitation, and more — and track their resolution from submission to completion.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>Which city corporations are supported?</h4>
+      <p class="mt1">CivicEye supports all 12 city corporations of Bangladesh: Dhaka North (DNCC), Dhaka South (DSCC), Chattogram (CCC), Sylhet (SCC), Rajshahi (RCC), Khulna (KCC), Barishal (BCC), Narayanganj (NCC), Gazipur (GCC), Mymensingh (MCC), Cumilla (COCC), and Rangpur (RNCC).</p>
+    </div>
+
+    <div class="mb3">
+      <h4>Can I submit a complaint anonymously?</h4>
+      <p class="mt1">Yes. When submitting a complaint you can check the "Submit anonymously" option. Your name will not be shown on the complaint, but your account must still be logged in to allow tracking.</p>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2" style="color:var(--pr);font-size:1rem;letter-spacing:.05em;text-transform:uppercase">Submitting Complaints</h3>
+
+    <div class="mb3">
+      <h4>How do I submit a complaint?</h4>
+      <p class="mt1">Log in as a citizen, click "Report Issue" in the sidebar or navbar, fill in the title, description, category, and location, then submit. The system automatically routes your complaint to the correct city corporation and department.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>How does location auto-routing work?</h4>
+      <p class="mt1">When you type a location — for example "Gulshan" or "Dhanmondi" — the system looks it up in a built-in Bangladesh location database and matches it to the correct city corporation. No GPS required, though you can optionally pin your location on the map for more accuracy.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What happens if I submit a duplicate complaint?</h4>
+      <p class="mt1">If another citizen submitted a similar complaint in the same area within the last 6 hours, your complaint is automatically linked to the existing report. You become a co-reporter on the original complaint and receive updates as it progresses. This keeps the system efficient and prevents duplicate work orders.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What are the 12 complaint statuses?</h4>
+      <p class="mt1">Submitted &rarr; Under Review &rarr; Assigned &rarr; Surveying &rarr; Survey Done &rarr; Budget Pending &rarr; Budget Approved &rarr; Worker Assigned &rarr; In Progress &rarr; Resolved &rarr; Closed &rarr; Rejected. You can see the full timeline on your complaint's detail page.</p>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2" style="color:var(--pr);font-size:1rem;letter-spacing:.05em;text-transform:uppercase">Roles &amp; People</h3>
+
+    <div class="mb3">
+      <h4>What is the difference between a Field Worker and a Technician?</h4>
+      <p class="mt1">Field Workers handle physical labour tasks: road repairs, waste collection, drainage clearing, construction work. Technicians handle technical infrastructure: electrical faults, IT systems, traffic signal issues. The system assigns the correct type based on the complaint category automatically.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What is a Surveyor?</h4>
+      <p class="mt1">A Surveyor is a department employee who visits the complaint site before any work begins. They document findings, estimate costs for labour, equipment, and materials, and submit a formal survey report. Their report triggers the budget approval process.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What is a Department Admin / Department Head?</h4>
+      <p class="mt1">A Department Admin manages complaints for their specific department. They assign surveyors, assign workers, and can request transfers to other departments if a complaint was routed incorrectly. A Department Head is a designated senior admin who also receives notifications about incoming transfer requests to their department.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What does the Finance Officer do?</h4>
+      <p class="mt1">The Finance Officer reviews all pending expense requests generated from survey reports. They approve or reject budget allocations for each complaint. No work begins without finance approval. Finance Officers can also allocate annual budgets to departments.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>What is a Super Admin?</h4>
+      <p class="mt1">The Super Admin has system-wide access. Their responsibilities include: creating and managing departments, assigning user roles and departments, approving or rejecting transfer requests between departments, and viewing system-wide reports. Super Admins are notified only for unrouted complaints (where no matching department was found).</p>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2" style="color:var(--pr);font-size:1rem;letter-spacing:.05em;text-transform:uppercase">Transfers &amp; Merges</h3>
+
+    <div class="mb3">
+      <h4>What is a complaint transfer?</h4>
+      <p class="mt1">If a complaint was routed to the wrong department, the current department admin can submit a transfer request with a reason. The Super Admin reviews the request and approves or rejects it. If approved, the complaint moves to the new department and the full history is preserved.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>How do I track the status of my complaint?</h4>
+      <p class="mt1">Log in and go to "My Complaints". Click any complaint to see its full status timeline, survey report (if available), assigned personnel, and budget status. You also receive in-platform notifications at each major milestone.</p>
+    </div>
+  </div>
+
+  <div class="card mb3">
+    <h3 class="mb2" style="color:var(--pr);font-size:1rem;letter-spacing:.05em;text-transform:uppercase">Privacy &amp; Data</h3>
+
+    <div class="mb3">
+      <h4>How is my data used?</h4>
+      <p class="mt1">Your data is used solely to operate the complaint management system. Complaint details are shared with relevant department staff to resolve your issue. Anonymous complaints hide your name but still require an account for tracking purposes. See our <a href="{% url 'privacy' %}">Privacy Policy</a> for full details.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>Can I see reports from other citizens?</h4>
+      <p class="mt1">The System Stats page (available to logged-in citizens) shows aggregated statistics — total complaints, resolution rates, category breakdowns — without revealing any individual citizen's name or personal details.</p>
+    </div>
+
+    <div class="mb3">
+      <h4>How do I reset my password?</h4>
+      <p class="mt1">Contact your system administrator or reach us via the <a href="{% url 'contact' %}">Contact page</a>. Password reset by email will be available in a future update.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

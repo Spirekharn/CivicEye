@@ -1,0 +1,106 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}System Statistics{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <h1>System Statistics</h1>
+    <p class="sub">Live overview of complaint activity across all city corporations.</p>
+  </div>
+  <a href="{% url 'complaint_list' %}" class="btn btn-outline btn-sm">My Complaints</a>
+</div>
+
+<div class="stats mb3">
+  <div class="stat">
+    <div class="stat-l">Total Complaints</div>
+    <div class="stat-v mono">{{ total }}</div>
+    <div class="stat-n">All time</div>
+  </div>
+  <div class="stat stat-green">
+    <div class="stat-l">Resolved</div>
+    <div class="stat-v mono">{{ resolved }}</div>
+    <div class="stat-n">Closed + resolved</div>
+  </div>
+  <div class="stat {% if success_rate >= 70 %}stat-green{% elif success_rate >= 40 %}stat-amber{% else %}stat-red{% endif %}">
+    <div class="stat-l">Success Rate</div>
+    <div class="stat-v mono">{{ success_rate }}%</div>
+    <div class="stat-n">Of all complaints</div>
+  </div>
+  <div class="stat stat-amber">
+    <div class="stat-l">Open / In Progress</div>
+    <div class="stat-v mono">{{ open_count }}</div>
+    <div class="stat-n">Currently active</div>
+  </div>
+</div>
+
+<div class="g2 mb3">
+  <div class="card">
+    <h3 class="mb2">By Category</h3>
+    {% if category_stats %}
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>Category</th><th>Complaints</th><th>Share</th></tr>
+        </thead>
+        <tbody>
+          {% for s in category_stats %}
+          <tr>
+            <td>{{ s.label }}</td>
+            <td class="mono semi">{{ s.count }}</td>
+            <td style="width:180px">
+              <div class="prog">
+                <div class="prog-fill" style="width:{{ s.pct }}%"></div>
+              </div>
+              <span class="xs muted">{{ s.pct }}%</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty"><p>No data yet.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3 class="mb2">By City Corporation</h3>
+    {% if corp_stats %}
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>City Corporation</th><th>Code</th><th>Complaints</th></tr>
+        </thead>
+        <tbody>
+          {% for s in corp_stats %}
+          <tr>
+            <td>{{ s.name }}</td>
+            <td><span class="badge b-teal">{{ s.code }}</span></td>
+            <td class="mono semi">{{ s.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty"><p>No data yet.</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h3 class="mb2">Recently Resolved</h3>
+  {% if recent_resolved %}
+  {% for c in recent_resolved %}
+  <div class="cc" style="text-decoration:none;display:flex;gap:1rem;padding:.9rem 1rem;margin-bottom:.5rem;border:1px solid var(--bdr);border-radius:var(--radius-sm)">
+    <div style="flex:1;min-width:0">
+      <div class="semi trunc">{{ c.title }}</div>
+      <div class="xs muted mt1">{{ c.get_category_display }} &middot; {{ c.city_corp }} &middot; {{ c.updated_at|date:"d M Y" }}</div>
+    </div>
+    <span class="badge b-resolved">Resolved</span>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty"><p>No resolved complaints yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}
