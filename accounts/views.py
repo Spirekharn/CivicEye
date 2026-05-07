@@ -86,13 +86,13 @@ def about_view(request):
         {'name': 'General Administration'},
     ]
     features = [
-        {'title': 'Smart Location Routing',
+        {'icon': 'Loc', 'title': 'Smart Location Routing',
          'desc': 'Type any Bangladesh area — Dhanmondi, Agrabad, Sylhet — and the system auto-detects the city corporation and routes to the correct department.'},
-        {'title': 'End-to-End Tracking',
+        {'icon': 'Trk', 'title': 'End-to-End Tracking',
          'desc': 'Citizens follow every stage: submission, survey, budget approval, assignment, and resolution — with a full audit trail.'},
-        {'title': 'Right Person, Right Job',
+        {'icon': 'Rol', 'title': 'Right Person, Right Job',
          'desc': 'Physical issues go to Field Workers. Electrical and IT issues go to Technicians. Automatically filtered by complaint category.'},
-        {'title': 'Transparent Finance',
+        {'icon': 'Fin', 'title': 'Transparent Finance',
          'desc': 'Every expense links to a complaint. Department budgets are tracked, approved, and publicly auditable.'},
     ]
     workflow_steps = [

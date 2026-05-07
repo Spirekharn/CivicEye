@@ -162,14 +162,13 @@
   </div>
   <div class="pg-actions">
     <a href="{% url 'admin_complaints' %}" class="btn btn-outline">All Complaints</a>
-    <a href="{% url 'transfer_list' %}" class="btn btn-outline">Transfers</a>
   </div>
 </div>
 
 {% if pending_transfers > 0 %}
 <div class="alert warning mb3">
   You have <strong>{{ pending_transfers }}</strong> pending transfer request{{ pending_transfers|pluralize }}.
-  <a href="{% url 'transfer_list' %}" style="margin-left:.5rem">View</a>
+  Ask your Super Admin to review them.
 </div>
 {% endif %}
 

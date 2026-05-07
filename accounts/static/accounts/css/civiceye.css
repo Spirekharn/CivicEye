@@ -330,6 +330,7 @@ strong{font-weight:600;color:var(--text)}
   white-space:nowrap;
 }
 .b-submitted  {background:var(--sl);color:var(--s)}
+.b-under_review{background:var(--tl);color:var(--t)}
 .b-review     {background:var(--tl);color:var(--t)}
 .b-assigned   {background:var(--ol);color:var(--o)}
 .b-surveying,.b-survey_done{background:var(--ol);color:var(--o)}

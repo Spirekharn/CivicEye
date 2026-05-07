@@ -100,7 +100,7 @@ def approve_expense(request, pk):
         messages.error(request, 'Only Finance Officers can approve or reject expenses.')
         return redirect('finance_dashboard')
     expense = get_object_or_404(Expense, pk=pk)
-    action  = request.GET.get('action', 'approve')
+    action = request.POST.get('action') or request.GET.get('action', 'approve')
 
     if action == 'approve':
         spent = Expense.objects.filter(
@@ -130,7 +130,7 @@ def approve_expense(request, pk):
             _notify(c.citizen, 'Budget Approved', f'Budget approved for your complaint "{c.title}". A worker will be assigned soon.', 'budget_approved', c)
         messages.success(request, f'Expense of BDT {expense.amount:,.0f} approved.')
     elif action == 'reject':
-        reason = request.GET.get('reason', 'Insufficient budget or invalid estimate.')
+        reason = request.POST.get('reason') or request.GET.get('reason', 'Insufficient budget or invalid estimate.')
         expense.status = 'rejected'
         expense.rejection_reason = reason
         expense.approved_by = request.user

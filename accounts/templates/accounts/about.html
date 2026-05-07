@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}About CivicEye{% endblock %}
 {% block content %}
 <section style="padding:5.5rem 0 4.5rem;text-align:center;border-bottom:1px solid var(--bdr);position:relative;overflow:hidden">
@@ -29,7 +30,7 @@
   <div class="stagger">
     {% for feature in features %}
     <div class="card mb2" style="padding:1.1rem 1.3rem;display:flex;gap:1rem;align-items:flex-start">
-      <div style="font-size:1.4rem;flex-shrink:0;width:40px;text-align:center">{{ feature.icon }}</div>
+      <div class="badge b-teal" style="flex-shrink:0;font-size:.6rem;align-self:flex-start">{{ feature.icon }}</div>
       <div><h5>{{ feature.title }}</h5><p class="sm mt1">{{ feature.desc }}</p></div>
     </div>
     {% endfor %}
@@ -103,7 +104,6 @@
 <div class="section">
   <div class="tc mb3"><h2 class="serif">The Team</h2><p style="max-width:420px;margin:.6rem auto 0">CSE 314 &middot; Software Engineering Lab &middot; 3rd Year, 2nd Semester</p></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.2rem" class="stagger">
-    {% load static %}
     {% for m in team %}
     <div class="card tc" style="padding:2.2rem 1.5rem">
       <div style="width:76px;height:76px;border-radius:18px;background:linear-gradient(135deg,var(--pr),var(--t));color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 14px 28px rgba(30,86,49,.18);position:relative;overflow:hidden">

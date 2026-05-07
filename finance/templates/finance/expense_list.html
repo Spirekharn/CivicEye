@@ -16,8 +16,8 @@
         <td><span class="badge {% if exp.status == 'approved' %}b-resolved{% elif exp.status == 'rejected' %}b-rejected{% else %}b-budget_pending{% endif %}">{{ exp.status }}</span></td>
         <td>
           {% if exp.complaint %}<a href="{% url 'complaint_detail' exp.complaint.pk %}" class="btn btn-outline btn-sm">Complaint</a>{% endif %}
-          {% if exp.status == 'pending' and user.role == 'admin' or exp.status == 'pending' and user.role == 'super_admin' %}
-          <a href="{% url 'approve_expense' exp.pk %}?action=approve" class="btn btn-green btn-sm">Approve</a>
+          {% if exp.status == 'pending' and user.role == 'finance' or exp.status == 'pending' and user.role == 'super_admin' %}
+          <form method="post" action="{% url 'approve_expense' exp.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="action" value="approve"><button type="submit" class="btn btn-green btn-sm">Approve</button></form>
           {% endif %}
         </td>
       </tr>

@@ -26,8 +26,8 @@
       </div>
     </div>
     <div class="flex-c gap-1">
-      <a href="{% url 'approve_expense' exp.pk %}?action=approve" class="btn btn-green btn-sm">Approve</a>
-      <a href="{% url 'approve_expense' exp.pk %}?action=reject" class="btn btn-red btn-sm">Reject</a>
+      <form method="post" action="{% url 'approve_expense' exp.pk %}">{% csrf_token %}<input type="hidden" name="action" value="approve"><button type="submit" class="btn btn-green btn-sm">Approve</button></form>
+      <form method="post" action="{% url 'approve_expense' exp.pk %}">{% csrf_token %}<input type="hidden" name="action" value="reject"><button type="submit" class="btn btn-red btn-sm">Reject</button></form>
     </div>
   </div>
   {% endfor %}

@@ -380,6 +380,9 @@ def complaint_detail(request, pk):
         'from_department', 'to_department', 'requested_by', 'reviewed_by'
     ).order_by('-created_at')
 
+    from django.conf import settings
+    hotline = settings.CITY_CORP_HOTLINES.get(c.city_corp, settings.CITY_CORP_HOTLINES['default'])
+
     return render(request, 'complaints/detail.html', {
         'c': c, 'history': history, 'survey': survey,
         'feedback': feedback, 'expense': expense,
@@ -391,6 +394,7 @@ def complaint_detail(request, pk):
         'co_reporters': co_reporters,
         'pending_transfer': pending_transfer,
         'transfer_requests': transfer_requests,
+        'hotline': hotline,
     })
 
 

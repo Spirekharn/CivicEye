@@ -154,8 +154,8 @@
       {% if user.role == 'finance' or user.role == 'super_admin' %}
       {% if expense.status == 'pending' %}
       <div class="mt2 flex-c gap-1">
-        <a href="{% url 'approve_expense' expense.pk %}?action=approve" class="btn btn-green btn-sm">Approve Budget</a>
-        <a href="{% url 'approve_expense' expense.pk %}?action=reject" class="btn btn-red btn-sm">Reject</a>
+        <form method="post" action="{% url 'approve_expense' expense.pk %}">{% csrf_token %}<input type="hidden" name="action" value="approve"><button type="submit" class="btn btn-green btn-sm">Approve Budget</button></form>
+        <form method="post" action="{% url 'approve_expense' expense.pk %}">{% csrf_token %}<input type="hidden" name="action" value="reject"><button type="submit" class="btn btn-red btn-sm">Reject</button></form>
       </div>
       {% endif %}
       {% endif %}
@@ -294,7 +294,7 @@
         </div>
         <div class="fg">
           <label class="label">Reason</label>
-          <textarea class="textarea" name="reason" rows="3" placeholder="Explain why this complaint should be transferred..." required></textarea>
+          <textarea class="textarea" name="transfer_reason" rows="3" placeholder="Explain why this complaint should be transferred..." required></textarea>
         </div>
         <button type="submit" class="btn btn-outline btn-full">Submit Transfer Request</button>
       </form>
@@ -415,11 +415,9 @@
     {% if c.city_corp %}
     <div class="card mt2">
       <h4 class="mb2">Hotline</h4>
-      {% with hotline=HOTLINES|default_if_none:DEFAULT_HOTLINE %}
       <div class="xs muted mb1">{{ c.get_city_corp_display|default:c.city_corp }}</div>
-      <div class="sm semi">{{ DEFAULT_HOTLINE.shortcode }}</div>
-      <div class="xs muted">Emergency: {{ DEFAULT_HOTLINE.emergency }}</div>
-      {% endwith %}
+      <div class="sm semi">{{ hotline.shortcode }}</div>
+      <div class="xs muted">Emergency: {{ hotline.emergency }}</div>
     </div>
     {% endif %}
   </div>
