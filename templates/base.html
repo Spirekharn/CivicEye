@@ -15,10 +15,9 @@
 <body>
 
 <div class="hotline-bar">
-  <span>Helpline: <strong>{{ DEFAULT_HOTLINE.shortcode }}</strong></span>
-  <span>Emergency: <strong>{{ DEFAULT_HOTLINE.emergency }}</strong></span>
-  <a href="{% url 'faq' %}">FAQ</a>
-  <a href="{% url 'contact' %}">Contact</a>
+  <span>📞 Helpline: <strong>{{ DEFAULT_HOTLINE.shortcode }}</strong></span>
+  <span>🚨 Emergency: <strong>{{ DEFAULT_HOTLINE.emergency }}</strong></span>
+  <a href="{% url 'contact' %}">📬 Contact</a>
 </div>
 
 {% if messages %}
@@ -39,24 +38,25 @@
   </a>
 
   <div class="nav-links">
-    <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Home</a>
-    <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>About</a>
-    <a href="{% url 'faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>FAQ</a>
-    {% if user.is_authenticated %}
-    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
-    <a href="{% url 'complaint_list' %}" {% if 'complaint' in request.resolver_match.url_name %}class="active"{% endif %}>Complaints</a>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>🏠 Home</a>
+    <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>ℹ️ About</a>
+    <a href="{% url 'faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>❓ FAQ</a>
+    {% else %}
+    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>📊 Dashboard</a>
+    <a href="{% url 'complaint_list' %}" {% if 'complaint' in request.resolver_match.url_name %}class="active"{% endif %}>📋 Complaints</a>
     {% if user.role == 'citizen' %}
-    <a href="{% url 'public_dashboard' %}" {% if request.resolver_match.url_name == 'public_dashboard' %}class="active"{% endif %}>System Stats</a>
+    <a href="{% url 'public_dashboard' %}" {% if request.resolver_match.url_name == 'public_dashboard' %}class="active"{% endif %}>📈 System Stats</a>
     {% endif %}
     {% if user.role == 'admin' or user.role == 'super_admin' %}
-    <a href="{% url 'department_list' %}" {% if 'department' in request.resolver_match.url_name %}class="active"{% endif %}>Departments</a>
+    <a href="{% url 'department_list' %}" {% if 'department' in request.resolver_match.url_name %}class="active"{% endif %}>🏛️ Departments</a>
     {% endif %}
     {% if user.role == 'finance' or user.role == 'super_admin' %}
-    <a href="{% url 'finance_dashboard' %}" {% if 'finance' in request.resolver_match.url_name %}class="active"{% endif %}>Finance</a>
+    <a href="{% url 'finance_dashboard' %}" {% if 'finance' in request.resolver_match.url_name %}class="active"{% endif %}>💰 Finance</a>
     {% endif %}
     {% if user.role == 'super_admin' %}
-    <a href="{% url 'transfer_list' %}" {% if request.resolver_match.url_name == 'transfer_list' %}class="active"{% endif %}>Transfers</a>
-    <a href="{% url 'superadmin_dashboard' %}" {% if request.resolver_match.url_name == 'superadmin_dashboard' %}class="active"{% endif %}>Admin Panel</a>
+    <a href="{% url 'transfer_list' %}" {% if request.resolver_match.url_name == 'transfer_list' %}class="active"{% endif %}>🔄 Transfers</a>
+    <a href="{% url 'superadmin_dashboard' %}" {% if request.resolver_match.url_name == 'superadmin_dashboard' %}class="active"{% endif %}>⚙️ Admin Panel</a>
     {% endif %}
     {% endif %}
   </div>
@@ -68,11 +68,11 @@
       <input type="hidden" name="theme_only" value="1">
       <input type="hidden" name="theme" value="{% if user.theme == 'dark' %}light{% else %}dark{% endif %}">
       <button type="submit" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
-        {% if user.theme == 'dark' %}day{% else %}night{% endif %}
+        {% if user.theme == 'dark' %}☀️{% else %}🌙{% endif %}
       </button>
     </form>
     <a href="{% url 'notification_list' %}" class="icon-btn" style="position:relative" title="Notifications">
-      notif
+      🔔
       {% if unread_notif_count > 0 %}<span class="notif-dot">{{ unread_notif_count }}</span>{% endif %}
     </a>
     <a href="{% url 'profile' %}" class="avatar" title="{{ user.get_full_name|default:user.username }}">
@@ -81,6 +81,7 @@
     </a>
     <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Sign out</a>
     {% else %}
+    <button type="button" class="icon-btn" id="guest-theme-btn" title="Toggle theme" aria-label="Toggle theme" onclick="guestToggleTheme()">🌙</button>
     <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Sign in</a>
     <a href="{% url 'register' %}" class="btn btn-pr btn-sm">Get started</a>
     {% endif %}
@@ -129,5 +130,21 @@
     <span>Supervised by Tanjina Helaly, Assistant Professor, CSE, UAP</span>
   </div>
 </footer>
+<script>
+(function(){
+  var t=localStorage.getItem('guest_theme');
+  if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}
+  var btn=document.getElementById('guest-theme-btn');
+  if(btn){btn.textContent=t==='dark'?'☀️':'🌙';}
+})();
+function guestToggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme');
+  var next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('guest_theme',next);
+  var btn=document.getElementById('guest-theme-btn');
+  if(btn){btn.textContent=next==='dark'?'☀️':'🌙';}
+}
+</script>
 </body>
 </html>
