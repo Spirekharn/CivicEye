@@ -1,10 +1,18 @@
+from datetime import date
 from django.db import models
 from django.conf import settings
 
 
+def get_fiscal_year():
+    today = date.today()
+    if today.month >= 7:
+        return f'{today.year}-{today.year + 1}'
+    return f'{today.year - 1}-{today.year}'
+
+
 class DepartmentBudget(models.Model):
     department     = models.ForeignKey('departments.Department', on_delete=models.CASCADE, related_name='budgets')
-    fiscal_year    = models.CharField(max_length=9, default='2025-2026')
+    fiscal_year    = models.CharField(max_length=9, default=get_fiscal_year)
     allocated_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     allocated_by   = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     notes          = models.TextField(blank=True)
@@ -27,8 +35,8 @@ class Expense(models.Model):
     department    = models.ForeignKey('departments.Department', on_delete=models.CASCADE)
     complaint     = models.OneToOneField('complaints.Complaint', null=True, blank=True, on_delete=models.SET_NULL)
     amount        = models.DecimalField(max_digits=14, decimal_places=2)
-    fiscal_year   = models.CharField(max_length=9, default='2025-2026')
-    status        = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    fiscal_year   = models.CharField(max_length=9, default=get_fiscal_year)
+    status        = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
     approved_by   = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     rejection_reason = models.TextField(blank=True)
     created_at    = models.DateTimeField(auto_now_add=True)

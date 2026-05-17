@@ -6,7 +6,6 @@
 </div>
 <div class="g2" style="align-items:start;gap:2rem">
   <div class="card">
-    {% if messages %}{% for msg in messages %}<div class="alert danger mb2">{{ msg }}</div>{% endfor %}{% endif %}
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="fg">
@@ -15,7 +14,7 @@
       </div>
       <div class="fg">
         <label class="label">Category <span style="color:var(--r)">*</span></label>
-        <select class="select" name="category" required>
+        <select class="select" name="category" required data-tomselect>
           <option value="">Select category</option>
           <option value="roads" {% if post.category == 'roads' %}selected{% endif %}>Roads &amp; Infrastructure</option>
           <option value="water" {% if post.category == 'water' %}selected{% endif %}>Water &amp; Sewerage</option>
@@ -33,7 +32,7 @@
       </div>
       <div class="fg">
         <label class="label">Department</label>
-        <select class="select" name="department">
+        <select class="select" name="department" data-tomselect>
           <option value="">Auto-route from category and location</option>
           {% regroup departments by city_corp as corp_list %}
           {% for corp in corp_list %}

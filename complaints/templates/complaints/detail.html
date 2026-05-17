@@ -1,4 +1,5 @@
 {% extends 'accounts/dashboard_base.html' %}
+{% load complaint_tags %}
 {% block title %}{{ c.title|truncatechars:40 }}{% endblock %}
 {% block content %}
 <div class="pg-hdr">
@@ -41,7 +42,10 @@
 <div class="card mb2" style="padding:1.2rem 1.5rem">
   <div class="flex-b mb2">
     <span class="xs muted bold mono">PROGRESS</span>
-    <span class="xs muted mono">{{ progress }}%</span>
+    <span class="flex-c gap-1">
+      <span class="badge b-{{ c.status }}" style="font-size:.72rem">{{ c.get_status_display }}</span>
+      <span class="xs muted mono">{{ progress }}%</span>
+    </span>
   </div>
   <div class="prog" style="height:8px">
     <div class="prog-fill {% if progress < 40 %}amber{% elif progress == 100 %}{% endif %}" style="width:{{ progress }}%"></div>
@@ -74,7 +78,7 @@
         <div><div class="xxs muted bold mono mb1">COORDINATES</div><div class="xs mono muted">{{ c.latitude }}, {{ c.longitude }}</div></div>
         {% endif %}
         <div><div class="xxs muted bold mono mb1">REPORTED BY</div>
-          <div class="sm">{% if c.is_anonymous %}Anonymous{% else %}{{ c.citizen.get_full_name|default:c.citizen.username }}{% endif %}</div>
+          <div class="sm">{% display_reporter c %} <span class="xs muted">{% reporter_note c %}</span></div>
         </div>
         <div><div class="xxs muted bold mono mb1">SUBMITTED</div><div class="sm mono">{{ c.created_at|date:"d M Y" }}</div></div>
         {% if c.assigned_surveyor %}
@@ -117,6 +121,7 @@
       {% if survey.materials_needed %}
       <p class="sm mb2"><strong>Materials needed:</strong> {{ survey.materials_needed }}</p>
       {% endif %}
+      {% if show_actual_budget %}
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1rem">
         <div class="card card-flat tc" style="padding:.8rem"><div class="xxs muted mono mb1">LABOUR</div><div class="semi mono">BDT {{ survey.labor_estimate|floatformat:0 }}</div></div>
         <div class="card card-flat tc" style="padding:.8rem"><div class="xxs muted mono mb1">EQUIPMENT</div><div class="semi mono">BDT {{ survey.equipment_estimate|floatformat:0 }}</div></div>
@@ -126,6 +131,16 @@
         <span class="sm semi text-pr">Total Estimate</span>
         <span class="bold mono text-pr" style="font-size:1.1rem">BDT {{ survey.estimated_cost|floatformat:0 }}</span>
       </div>
+      {% else %}
+      <div class="flex-b" style="padding:.9rem 1rem;background:var(--pr-l);border-radius:var(--radius-sm);border:1px solid var(--pr)">
+        <span class="sm semi text-pr">Estimated Cost Range</span>
+        {% if survey_cost_range %}
+        <span class="bold mono text-pr" style="font-size:1.05rem">৳{{ survey_cost_range.0|floatformat:0 }} – ৳{{ survey_cost_range.1|floatformat:0 }}</span>
+        {% else %}
+        <span class="xs muted">Pending assessment</span>
+        {% endif %}
+      </div>
+      {% endif %}
       <div class="flex-c gap-2 mt2">
         <div class="xs muted">Est. days: <span class="semi">{{ survey.estimated_days }}</span></div>
         <div class="xs muted">Priority rec: <span class="badge b-{{ survey.priority_recommendation }}">{{ survey.priority_recommendation }}</span></div>
@@ -140,6 +155,7 @@
         <h4>Budget &amp; Expense</h4>
         <span class="badge {% if expense.status == 'approved' %}b-resolved{% elif expense.status == 'rejected' %}b-rejected{% else %}b-budget_pending{% endif %}">{{ expense.status }}</span>
       </div>
+      {% if show_actual_budget %}
       <div class="flex-b">
         <span class="sm muted">Amount</span>
         <span class="bold mono">BDT {{ expense.amount|floatformat:0 }}</span>
@@ -148,6 +164,12 @@
         <span class="sm muted">Fiscal Year</span>
         <span class="xs mono">{{ expense.fiscal_year }}</span>
       </div>
+      {% else %}
+      <div class="flex-b">
+        <span class="sm muted">Budget</span>
+        <span class="xs muted">{{ expense.status|capfirst }}</span>
+      </div>
+      {% endif %}
       {% if expense.rejection_reason %}
       <div class="alert danger mt2"><p class="sm" style="color:inherit">{{ expense.rejection_reason }}</p></div>
       {% endif %}
@@ -164,7 +186,8 @@
 
     <!-- Worker status update -->
     {% if user.role == 'worker' or user.role == 'technician' %}
-    {% if c.assigned_worker == user and c.status == 'worker_assigned' or c.assigned_worker == user and c.status == 'in_progress' %}
+    {% if c.assigned_worker == user %}
+    {% if c.status == 'worker_assigned' or c.status == 'in_progress' %}
     <div class="card mb2 card-amber">
       <h4 class="mb2">Update Task Status</h4>
       <form method="post" action="{% url 'update_status' c.pk %}" enctype="multipart/form-data">
@@ -189,9 +212,51 @@
     </div>
     {% endif %}
     {% endif %}
+    {% endif %}
+
+    <!-- Worker resurvey request -->
+    {% if user.role == 'worker' or user.role == 'technician' %}
+    {% if c.assigned_worker == user %}
+    {% if c.status == 'worker_assigned' or c.status == 'in_progress' %}
+    <div class="card mb2" style="border-top:3px solid var(--o)">
+      <h4 class="mb2" style="color:var(--o)">Request Resurvey</h4>
+      <p class="sm mb2">If the issue is more complex than the survey estimated, flag it here.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="request_resurvey">
+        <div class="fg">
+          <label class="label">What did you find? <span>*</span></label>
+          <textarea name="resurvey_reason" class="textarea" rows="2" required placeholder="Describe the issue that requires a new survey..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-amber btn-sm" onclick="return confirm('Request a resurvey?')">Request Resurvey</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+
+    <!-- Surveyor reject -->
+    {% if user.role == 'surveyor' and c.assigned_surveyor == user %}
+    {% if c.status == 'assigned' or c.status == 'surveying' %}
+    <div class="card mb2" style="border-top:3px solid var(--r)">
+      <h4 class="mb2" style="color:var(--r)">Mark as Invalid</h4>
+      <p class="sm mb2">If the complaint is unfounded or already resolved, reject it here.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="surveyor_reject">
+        <div class="fg">
+          <label class="label">Reason <span>*</span></label>
+          <textarea name="reject_reason" class="textarea" rows="2" required placeholder="Explain why this complaint cannot be verified..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-red btn-sm" onclick="return confirm('Mark this complaint as invalid?')">Mark as Invalid</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
 
     <!-- Citizen Feedback -->
-    {% if user.role == 'citizen' and c.citizen == user and c.status == 'resolved' or user.role == 'citizen' and c.citizen == user and c.status == 'closed' %}
+    {% if user.role == 'citizen' and c.citizen == user %}
+    {% if c.status == 'resolved' or c.status == 'closed' %}
     {% if not feedback %}
     <div class="card mb2 card-green">
       <h4 class="mb2">Rate this Resolution</h4>
@@ -228,10 +293,15 @@
     </div>
     {% endif %}
     {% endif %}
+    {% endif %}
 
     {% if user.role == 'admin' or user.role == 'super_admin' %}
-    <div class="card mb2">
-      <h4 class="mb2">Department Assignment</h4>
+    <details class="card mb2">
+      <summary style="cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        Department Assignment
+        <span class="xs muted" style="font-weight:400">▸ click to expand</span>
+      </summary>
+      <div style="margin-top:1rem">
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="department">
@@ -259,7 +329,8 @@
           </div>
         </div>
       </form>
-    </div>
+      </div>
+    </details>
     {% endif %}
 
     <!-- Transfer Request -->
@@ -325,8 +396,12 @@
 
     <!-- Manual Merge -->
     {% if user.role == 'admin' or user.role == 'super_admin' %}
-    <div class="card mb2">
-      <h4 class="mb2">Manual Merge</h4>
+    <details class="card mb2">
+      <summary style="cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        Manual Merge
+        <span class="xs muted" style="font-weight:400">▸ click to expand</span>
+      </summary>
+      <div style="margin-top:1rem">
       <p class="sm muted mb2">Mark another complaint as a duplicate of this one. The other complaint's citizen will be added as a co-reporter here.</p>
       <form method="post">
         {% csrf_token %}
@@ -341,13 +416,18 @@
           </div>
         </div>
       </form>
-    </div>
+      </div>
+    </details>
     {% endif %}
 
     <!-- Admin override -->
     {% if user.role == 'admin' or user.role == 'super_admin' %}
-    <div class="card">
-      <h4 class="mb2">Admin Override</h4>
+    <details class="card">
+      <summary style="cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        Admin Override
+        <span class="xs muted" style="font-weight:400">▸ click to expand</span>
+      </summary>
+      <div style="margin-top:1rem">
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="override">
@@ -367,7 +447,8 @@
         </div>
         <button type="submit" class="btn btn-outline btn-sm">Apply Override</button>
       </form>
-    </div>
+      </div>
+    </details>
     {% endif %}
   </div>
 
@@ -415,9 +496,12 @@
     {% if c.city_corp %}
     <div class="card mt2">
       <h4 class="mb2">Hotline</h4>
-      <div class="xs muted mb1">{{ c.get_city_corp_display|default:c.city_corp }}</div>
-      <div class="sm semi">{{ hotline.shortcode }}</div>
-      <div class="xs muted">Emergency: {{ hotline.emergency }}</div>
+      <div class="xs muted mb1">{{ c.city_corp }} — {{ hotline.name }}</div>
+      <div class="sm semi mb1">Shortcode: {{ hotline.shortcode }}</div>
+      {% for num in hotline.numbers %}
+      <div class="xs mono muted">{{ num }}</div>
+      {% endfor %}
+      <div class="xs muted mt1">Emergency: <strong>{{ hotline.emergency }}</strong></div>
     </div>
     {% endif %}
   </div>

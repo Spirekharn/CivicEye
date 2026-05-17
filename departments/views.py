@@ -8,7 +8,7 @@ from complaints.models import Complaint
 @login_required
 def department_list(request):
     depts = Department.objects.filter(is_active=True).order_by('city_corp', 'name')
-    corps = list(set(d.city_corp for d in depts))
+    corps = sorted(set(d.city_corp for d in depts))
     return render(request, 'departments/list.html', {'departments': depts, 'corps': corps})
 
 

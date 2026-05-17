@@ -2,7 +2,7 @@
 {% block title %}User Management{% endblock %}
 {% block content %}
 <div class="pg-hdr">
-  <div><h1>User Management</h1><p class="sub">{{ users.count }} user{{ users.count|pluralize }}</p></div>
+  <div><h1>User Management</h1><p class="sub">{{ page_obj.paginator.count }} user{{ page_obj.paginator.count|pluralize }}</p></div>
   {% if request.user.role == 'super_admin' %}
   <div class="pg-actions">
     <a href="{% url 'superadmin_dashboard' %}" class="btn btn-outline">Super Admin Panel</a>
@@ -95,7 +95,7 @@
             {% if u != request.user %}
             <form method="post" action="{% url 'toggle_user' u.pk %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-outline btn-sm">
+              <button type="submit" class="btn btn-outline btn-sm" {% if u.is_active %}onclick="return confirm('Are you sure you want to deactivate this user?')"{% endif %}>
                 {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
               </button>
             </form>
@@ -117,4 +117,15 @@
     </table>
   </div>
 </div>
+{% if page_obj.has_other_pages %}
+<div class="flex-c gap-1 mt3" style="justify-content:center">
+  {% if page_obj.has_previous %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+  {% endif %}
+  <span class="xs muted mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

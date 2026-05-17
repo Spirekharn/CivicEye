@@ -9,7 +9,7 @@
       {% csrf_token %}
       <div class="fg">
         <label class="label">Department <span style="color:var(--r)">*</span></label>
-        <select class="select" name="department" required>
+        <select class="select" name="department" required data-tomselect>
           <option value="">— Select department —</option>
           {% regroup departments by city_corp as clist %}
           {% for corp in clist %}<optgroup label="{{ corp.grouper }}">{% for d in corp.list %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</optgroup>{% endfor %}
@@ -18,7 +18,7 @@
       <div class="form-row">
         <div class="fg">
           <label class="label">Fiscal Year <span style="color:var(--r)">*</span></label>
-          <input class="input" type="text" name="fiscal_year" value="2025-2026" placeholder="2025-2026" required>
+          <input class="input" type="text" name="fiscal_year" value="{{ current_fiscal_year }}" placeholder="{{ current_fiscal_year }}" required>
         </div>
         <div class="fg">
           <label class="label">Amount (BDT) <span style="color:var(--r)">*</span></label>

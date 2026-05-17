@@ -1,7 +1,22 @@
 {% extends 'accounts/dashboard_base.html' %}
 {% block title %}Notifications{% endblock %}
 {% block content %}
-<div class="pg-hdr"><div><h1>Notifications</h1><p class="sub">{{ notifications.count }} notification{{ notifications.count|pluralize }}</p></div></div>
+<div class="pg-hdr">
+  <div><h1>Notifications</h1><p class="sub">{{ page_obj.paginator.count }} notification{{ page_obj.paginator.count|pluralize }}{% if unread_count > 0 %} &mdash; {{ unread_count }} unread{% endif %}</p></div>
+  {% if unread_count > 0 %}
+  <form method="post" action="{% url 'mark_all_read' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline btn-sm">Mark all as read</button>
+  </form>
+  {% endif %}
+</div>
+
+<!-- Filter tabs -->
+<div style="display:flex;gap:.5rem;margin-bottom:1rem">
+  <a href="?filter=all" class="btn btn-sm {% if active_filter == 'all' %}btn-pr{% else %}btn-outline{% endif %}">All</a>
+  <a href="?filter=unread" class="btn btn-sm {% if active_filter == 'unread' %}btn-pr{% else %}btn-outline{% endif %}">Unread{% if unread_count %} ({{ unread_count }}){% endif %}</a>
+  <a href="?filter=read" class="btn btn-sm {% if active_filter == 'read' %}btn-pr{% else %}btn-outline{% endif %}">Read</a>
+</div>
 <div class="card">
   {% for n in notifications %}
   <div style="display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-bottom:1px solid var(--bdr);{% if not n.is_read %}background:var(--pr-l);margin:0 -1.5rem;padding:1rem 1.5rem;{% endif %}">
@@ -25,4 +40,15 @@
   {% empty %}<div class="empty"><div class="empty-ico">—</div><h3>No notifications</h3><p class="sm mt1">You'll be notified of all complaint updates here.</p></div>
   {% endfor %}
 </div>
+{% if page_obj.has_other_pages %}
+<div class="flex-c gap-1 mt3" style="justify-content:center">
+  {% if page_obj.has_previous %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+  {% endif %}
+  <span class="xs muted mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

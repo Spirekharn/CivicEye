@@ -4,7 +4,7 @@
 <div class="pg-hdr">
   <div>
     <h1>{% if user.role == 'citizen' %}My Complaints{% else %}Complaint List{% endif %}</h1>
-    <p class="sub">{{ complaints.count }} complaint{{ complaints.count|pluralize }}</p>
+    <p class="sub">{{ page_obj.paginator.count }} complaint{{ page_obj.paginator.count|pluralize }}</p>
   </div>
   {% if user.role == 'citizen' %}
   <a href="{% url 'complaint_create' %}" class="btn btn-pr">+ Report Issue</a>
@@ -73,4 +73,15 @@
   </div>
   {% endif %}
 </div>
+{% if page_obj.has_other_pages %}
+<div class="flex-c gap-1 mt3" style="justify-content:center">
+  {% if page_obj.has_previous %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+  {% endif %}
+  <span class="xs muted mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

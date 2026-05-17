@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Community Reports{% endblock %}
+
+{% block content %}
+<div class="section" style="padding-top:2.8rem;padding-bottom:4rem">
+
+  <!-- ── Hero header ─────────────────────────────────────────── -->
+  <div style="margin-bottom:2rem">
+    <div class="comm-eyebrow">🏛️ Transparency Portal</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 class="serif" style="font-size:2.1rem;line-height:1.2;margin-bottom:.55rem">
+          Community Complaint Reports
+        </h1>
+        <p style="color:var(--muted);font-size:.9rem;line-height:1.7;max-width:560px">
+          Browse civic complaints filed across all 12 Bangladesh city corporations.
+          Identities are protected. No personal data is shown.
+        </p>
+      </div>
+      <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;padding-top:.3rem">
+        <span style="font-size:.75rem;font-weight:700;color:var(--t);
+                     background:var(--tl);padding:.25rem .75rem;border-radius:99px">
+          {{ total_count }} report{{ total_count|pluralize }}
+        </span>
+        {% if user.is_authenticated %}
+        <a href="{% url 'complaint_create' %}" class="btn btn-pr btn-sm">+ Report Issue</a>
+        {% else %}
+        <a href="{% url 'register' %}" class="btn btn-pr btn-sm">Register to Report</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter toolbar ──────────────────────────────────────── -->
+  <form method="get" id="comm-filter-form" class="comm-toolbar">
+
+    <div class="comm-toolbar-search">
+      <span class="comm-toolbar-search-icon">🔍</span>
+      <input type="search" name="q" value="{{ q }}"
+             placeholder="Search title, area, description…" autocomplete="off">
+    </div>
+
+    <div class="comm-toolbar-sep"></div>
+
+    <select name="category" title="Category">
+      <option value="">All categories</option>
+      {% for val, label in category_choices %}
+      <option value="{{ val }}" {% if cat_f == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="status" title="Status">
+      <option value="">All statuses</option>
+      {% for val, label in status_choices %}
+      <option value="{{ val }}" {% if status_f == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="city_corp" title="City Corporation">
+      <option value="">All city corps</option>
+      {% for code, name in corp_choices %}
+      <option value="{{ code }}" {% if corp_f == code %}selected{% endif %}>{{ code }} — {{ name }}</option>
+      {% endfor %}
+    </select>
+
+    <div class="comm-toolbar-sep"></div>
+
+    <select name="sort" title="Sort order" style="flex:0 0 auto;min-width:140px">
+      <option value="newest"  {% if sort_f == 'newest'  %}selected{% endif %}>⬇ Newest first</option>
+      <option value="oldest"  {% if sort_f == 'oldest'  %}selected{% endif %}>⬆ Oldest first</option>
+      <option value="updated" {% if sort_f == 'updated' %}selected{% endif %}>🔄 Last updated</option>
+    </select>
+
+    <button type="submit" class="btn btn-pr btn-sm" style="flex-shrink:0">Search</button>
+    {% if q or cat_f or status_f or corp_f %}
+    <a href="{% url 'community_list' %}" class="btn btn-outline btn-sm" style="flex-shrink:0">✕ Clear</a>
+    {% endif %}
+
+  </form>
+
+  <!-- ── Results bar ─────────────────────────────────────────── -->
+  <div class="comm-results-bar">
+    <span class="comm-results-count">{{ total_count }}</span>
+    <span>report{{ total_count|pluralize }} found</span>
+    {% if q %}<span class="comm-filter-pill">🔍 "{{ q }}"</span>{% endif %}
+    {% if cat_f %}<span class="comm-filter-pill">{{ cat_f }}</span>{% endif %}
+    {% if status_f %}<span class="comm-filter-pill">{{ status_f|title }}</span>{% endif %}
+    {% if corp_f %}<span class="comm-filter-pill">{{ corp_f }}</span>{% endif %}
+  </div>
+
+  <!-- ── Complaint cards grid ────────────────────────────────── -->
+  {% if page_obj.object_list %}
+  <div class="comm-grid">
+    {% for c in page_obj %}
+    <a href="{% url 'community_detail' c.pk %}" class="comm-card" aria-label="{{ c.title }}" tabindex="0">
+
+      <!-- Image / category-gradient placeholder -->
+      <div class="comm-card-img
+        {% if c.category == 'roads' %}ccbg-roads
+        {% elif c.category == 'water' %}ccbg-water
+        {% elif c.category == 'electricity' %}ccbg-electricity
+        {% elif c.category == 'sanitation' %}ccbg-sanitation
+        {% elif c.category == 'parks' %}ccbg-parks
+        {% elif c.category == 'health' %}ccbg-health
+        {% elif c.category == 'building' %}ccbg-building
+        {% elif c.category == 'transport' %}ccbg-transport
+        {% elif c.category == 'environment' %}ccbg-environment
+        {% elif c.category == 'fire' %}ccbg-fire
+        {% elif c.category == 'it' %}ccbg-it
+        {% else %}ccbg-other
+        {% endif %}">
+
+        {% if c.image %}
+        <img src="{{ c.image.url }}" alt="Evidence photo" loading="lazy">
+        <div class="comm-card-overlay"></div>
+        {% else %}
+        <div class="comm-card-placeholder">
+          {% if c.category == 'roads' %}🛣️
+          {% elif c.category == 'water' %}💧
+          {% elif c.category == 'electricity' %}⚡
+          {% elif c.category == 'sanitation' %}♻️
+          {% elif c.category == 'parks' %}🌳
+          {% elif c.category == 'health' %}🏥
+          {% elif c.category == 'building' %}🏗️
+          {% elif c.category == 'transport' %}🚌
+          {% elif c.category == 'environment' %}🌿
+          {% elif c.category == 'fire' %}🔥
+          {% elif c.category == 'it' %}💻
+          {% else %}📋{% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Status badge overlaid on image -->
+        <div class="comm-card-status-over">
+          <span class="badge b-{{ c.status }}"
+                style="font-size:.65rem;box-shadow:0 1px 4px rgba(0,0,0,.2)">
+            {{ c.get_status_display }}
+          </span>
+        </div>
+
+        <!-- Priority badge (high/critical only) -->
+        {% if c.priority == 'critical' %}
+        <div class="comm-card-pri-over">
+          <span class="badge b-rejected"
+                style="font-size:.62rem;box-shadow:0 1px 4px rgba(0,0,0,.2)">Critical</span>
+        </div>
+        {% elif c.priority == 'high' %}
+        <div class="comm-card-pri-over">
+          <span class="badge b-budget_pending"
+                style="font-size:.62rem;box-shadow:0 1px 4px rgba(0,0,0,.2)">High</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Card body -->
+      <div class="comm-card-body">
+        <h2 class="comm-card-title">{{ c.title }}</h2>
+        <p class="comm-card-desc">{{ c.description|truncatechars:110 }}</p>
+        {% if c.location_text %}
+        <div class="comm-card-loc">
+          <span style="opacity:.55">📍</span>
+          {{ c.location_text|truncatechars:38 }}
+        </div>
+        {% endif %}
+        <div class="comm-card-foot">
+          <div class="comm-card-tags">
+            <span class="badge b-teal" style="font-size:.65rem;padding:.1rem .42rem">{{ c.city_corp }}</span>
+            <span class="comm-cat-label">{{ c.get_category_display }}</span>
+          </div>
+          <div class="comm-card-right">
+            <span class="comm-card-age">{{ c.created_at|timesince }} ago</span>
+            <span class="comm-view-btn">View →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status strip at card bottom -->
+      <div class="comm-card-strip st-{{ c.status }}"></div>
+
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- ── Pagination ───────────────────────────────────────────── -->
+  {% if page_obj.has_other_pages %}
+  <div class="comm-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?{% if q %}q={{ q }}&{% endif %}{% if cat_f %}category={{ cat_f }}&{% endif %}{% if status_f %}status={{ status_f }}&{% endif %}{% if corp_f %}city_corp={{ corp_f }}&{% endif %}{% if sort_f %}sort={{ sort_f }}&{% endif %}page={{ page_obj.previous_page_number }}"
+       class="btn btn-outline btn-sm">&larr; Previous</a>
+    {% endif %}
+    <span class="comm-page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?{% if q %}q={{ q }}&{% endif %}{% if cat_f %}category={{ cat_f }}&{% endif %}{% if status_f %}status={{ status_f }}&{% endif %}{% if corp_f %}city_corp={{ corp_f }}&{% endif %}{% if sort_f %}sort={{ sort_f }}&{% endif %}page={{ page_obj.next_page_number }}"
+       class="btn btn-outline btn-sm">Next &rarr;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- ── Empty state ─────────────────────────────────────────── -->
+  <div class="comm-empty">
+    <div style="font-size:2.8rem;margin-bottom:1rem;opacity:.35">📭</div>
+    <h3 style="margin-bottom:.5rem;font-size:1.1rem">No complaints found</h3>
+    <p class="muted" style="font-size:.875rem;max-width:380px;margin:0 auto;line-height:1.65">
+      {% if q or cat_f or status_f or corp_f %}
+      No reports match your current filters.
+      <a href="{% url 'community_list' %}" style="color:var(--pr);font-weight:600">Clear filters</a>
+      {% else %}
+      No complaints have been submitted yet.
+      {% endif %}
+    </p>
+    {% if user.is_authenticated %}
+    <a href="{% url 'complaint_create' %}" class="btn btn-pr btn-sm" style="margin-top:1.4rem">
+      + Report an Issue
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+/* Auto-submit dropdowns; debounce the search input */
+document.querySelectorAll('#comm-filter-form select').forEach(function(el) {
+  el.addEventListener('change', function() {
+    document.getElementById('comm-filter-form').submit();
+  });
+});
+(function(){
+  var inp = document.querySelector('#comm-filter-form input[name="q"]');
+  if (!inp) return;
+  var timer;
+  inp.addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(function() { document.getElementById('comm-filter-form').submit(); }, 600);
+  });
+})();
+</script>
+{% endblock %}

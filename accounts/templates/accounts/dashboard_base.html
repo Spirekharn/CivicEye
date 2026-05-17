@@ -15,6 +15,9 @@
   <a href="{% url 'complaint_create' %}" class="sb-link {% if request.resolver_match.url_name == 'complaint_create' %}active{% endif %}">
     Report Issue
   </a>
+  <a href="{% url 'community_list' %}" class="sb-link {% if 'community' in request.resolver_match.url_name %}active{% endif %}">
+    Community Reports
+  </a>
   <a href="{% url 'public_dashboard' %}" class="sb-link {% if request.resolver_match.url_name == 'public_dashboard' %}active{% endif %}">
     System Stats
   </a>
@@ -46,6 +49,9 @@
   <a href="{% url 'allocate_budget' %}" class="sb-link {% if request.resolver_match.url_name == 'allocate_budget' %}active{% endif %}">
     Allocate Budget
   </a>
+  <a href="{% url 'analytics_dashboard' %}" class="sb-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+    Analytics
+  </a>
   <a href="{% url 'admin_complaints' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
     All Complaints
   </a>
@@ -55,10 +61,13 @@
   <a href="{% url 'admin_complaints' %}" class="sb-link {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
     All Complaints
   </a>
-  {% if user.role == 'super_admin' %}
   <a href="{% url 'finance_dashboard' %}" class="sb-link {% if 'finance' in request.resolver_match.url_name %}active{% endif %}">
-    Finance
+    Budget &amp; Finance
   </a>
+  <a href="{% url 'analytics_dashboard' %}" class="sb-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+    Analytics
+  </a>
+  {% if user.role == 'super_admin' %}
   <a href="{% url 'transfer_list' %}" class="sb-link {% if request.resolver_match.url_name == 'transfer_list' %}active{% endif %}">
     Transfers
   </a>
@@ -93,7 +102,10 @@
         <div class="role-tag">{{ user.get_role_display }}</div>
       </div>
     </div>
-    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm w100">Sign out</a>
+    <form method="post" action="{% url 'logout' %}" style="margin:0;width:100%">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-sm w100">Sign out</button>
+    </form>
   </div>
 </aside>
 

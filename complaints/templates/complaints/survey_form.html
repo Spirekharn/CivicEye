@@ -7,7 +7,6 @@
 </div>
 <div class="g2" style="align-items:start">
   <div class="card">
-    {% if messages %}{% for msg in messages %}<div class="alert danger mb2">{{ msg }}</div>{% endfor %}{% endif %}
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="fg">

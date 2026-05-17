@@ -6,7 +6,7 @@ Creates departments for each city corporation + test accounts.
 from django.core.management.base import BaseCommand
 from departments.models import Department
 from accounts.models import User
-from finance.models import DepartmentBudget
+from finance.models import DepartmentBudget, get_fiscal_year
 
 
 DEPT_TEMPLATE = [
@@ -18,6 +18,7 @@ DEPT_TEMPLATE = [
     ('fire',        'Fire & Emergency',              3000000),
     ('it',          'IT & Technology',               1500000),
     ('transport',   'Transport & Traffic',           2000000),
+    # ('parks', 'Parks & Recreation', 1800000),  # parks dept not yet confirmed for all corps
 ]
 
 CORPS = [
@@ -107,7 +108,7 @@ class Command(BaseCommand):
         for dept in Department.objects.filter(is_active=True):
             match = next((b for s,n,b in DEPT_TEMPLATE if s == dept.slug), 2000000)
             DepartmentBudget.objects.get_or_create(
-                department=dept, fiscal_year='2025-2026',
+                department=dept, fiscal_year=get_fiscal_year(),
                 defaults={'allocated_amount': match, 'allocated_by': sa}
             )
 

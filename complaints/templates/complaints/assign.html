@@ -11,7 +11,7 @@
       {% csrf_token %}
       <div class="fg">
         <label class="label">Department <span style="color:var(--r)">*</span></label>
-        <select class="select" name="department" required>
+        <select class="select" name="department" required data-tomselect>
           <option value="">Select department</option>
           {% regroup departments by city_corp as corp_list %}
           {% for corp in corp_list %}
@@ -25,7 +25,7 @@
       </div>
       <div class="fg">
         <label class="label">Surveyor</label>
-        <select class="select" name="surveyor">
+        <select class="select" name="surveyor" data-tomselect>
           <option value="">Save department only</option>
           {% for sv in surveyors %}
           <option value="{{ sv.pk }}">{{ sv.get_full_name|default:sv.username }} (@{{ sv.username }})</option>

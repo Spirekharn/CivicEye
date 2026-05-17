@@ -2,11 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
-from .models import DepartmentBudget, Expense
+from .models import DepartmentBudget, Expense, get_fiscal_year
 from departments.models import Department
 from accounts.models import User
 from notifications.models import Notification
-from complaints.models import Complaint
 
 
 def _notify(user, title, msg, ntype, complaint=None):
@@ -19,7 +18,7 @@ def finance_dashboard(request):
     if request.user.role not in ('admin', 'finance', 'super_admin'):
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     u = request.user
-    fiscal = '2025-2026'
+    fiscal = get_fiscal_year()
 
     if u.role == 'admin':
         budgets = DepartmentBudget.objects.filter(fiscal_year=fiscal, department=u.department)
@@ -37,11 +36,19 @@ def finance_dashboard(request):
     total_spent  = expenses.filter(status='approved').aggregate(Sum('amount'))['amount__sum'] or 0
     total_remaining = total_budget - total_spent
 
+    # build lookup maps in 2 queries instead of 2×N queries
+    budget_map = {b.department_id: b.allocated_amount
+                  for b in DepartmentBudget.objects.filter(fiscal_year=fiscal)}
+    spent_map = {
+        row['department']: row['total']
+        for row in Expense.objects.filter(fiscal_year=fiscal, status='approved')
+                                  .values('department')
+                                  .annotate(total=Sum('amount'))
+    }
     dept_budgets = []
     for d in depts:
-        b = DepartmentBudget.objects.filter(department=d, fiscal_year=fiscal).first()
-        allocated = b.allocated_amount if b else 0
-        spent = Expense.objects.filter(department=d, fiscal_year=fiscal, status='approved').aggregate(Sum('amount'))['amount__sum'] or 0
+        allocated = budget_map.get(d.pk, 0)
+        spent = spent_map.get(d.pk, 0) or 0
         remaining = max(0, allocated - spent)
         pct = min(100, round((spent / allocated * 100) if allocated else 0))
         dept_budgets.append({'dept': d, 'allocated': allocated, 'spent': spent, 'remaining': remaining, 'pct': pct})
@@ -61,26 +68,37 @@ def allocate_budget(request):
     if request.user.role not in ('finance', 'super_admin'):
         messages.error(request, 'Only Finance Officers can allocate budgets.')
         return redirect('dashboard')
+    depts = Department.objects.filter(is_active=True).order_by('city_corp', 'name')
     if request.method == 'POST':
         dept_id = request.POST.get('department')
-        fiscal  = request.POST.get('fiscal_year', '2025-2026').strip()
+        fiscal  = request.POST.get('fiscal_year', get_fiscal_year()).strip()
         amount  = request.POST.get('allocated_amount', 0)
         notes   = request.POST.get('notes', '').strip()
         try:
-            dept   = Department.objects.get(id=dept_id)
+            dept = Department.objects.get(id=dept_id)
+        except Department.DoesNotExist:
+            messages.error(request, 'Selected department does not exist.')
+            return render(request, 'finance/allocate.html', {
+                'departments': depts, 'current_fiscal_year': get_fiscal_year()})
+        try:
             amount = float(amount)
-            if amount <= 0: raise ValueError
-            obj, created = DepartmentBudget.objects.update_or_create(
-                department=dept, fiscal_year=fiscal,
-                defaults={'allocated_amount': amount, 'allocated_by': request.user, 'notes': notes}
-            )
-            messages.success(request, f'Budget of BDT {amount:,.0f} allocated to {dept.name} for {fiscal}.')
-            return redirect('finance_dashboard')
-        except Exception as e:
-            messages.error(request, f'Error: {e}')
+            if amount <= 0:
+                raise ValueError('Amount must be greater than zero.')
+        except (TypeError, ValueError) as exc:
+            messages.error(request, f'Invalid budget amount: {exc}')
+            return render(request, 'finance/allocate.html', {
+                'departments': depts, 'current_fiscal_year': get_fiscal_year()})
+        DepartmentBudget.objects.update_or_create(
+            department=dept, fiscal_year=fiscal,
+            defaults={'allocated_amount': amount, 'allocated_by': request.user, 'notes': notes}
+        )
+        messages.success(request, f'Budget of BDT {amount:,.0f} allocated to {dept.name} for {fiscal}.')
+        return redirect('finance_dashboard')
 
-    depts = Department.objects.filter(is_active=True).order_by('city_corp', 'name')
-    return render(request, 'finance/allocate.html', {'departments': depts})
+    return render(request, 'finance/allocate.html', {
+        'departments': depts,
+        'current_fiscal_year': get_fiscal_year(),
+    })
 
 
 @login_required
@@ -100,7 +118,11 @@ def approve_expense(request, pk):
         messages.error(request, 'Only Finance Officers can approve or reject expenses.')
         return redirect('finance_dashboard')
     expense = get_object_or_404(Expense, pk=pk)
-    action = request.POST.get('action') or request.GET.get('action', 'approve')
+    action = request.POST.get('action', 'approve')
+
+    if expense.status != 'pending':
+        messages.error(request, 'This expense has already been reviewed.')
+        return redirect('finance_dashboard')
 
     if action == 'approve':
         spent = Expense.objects.filter(
@@ -119,7 +141,7 @@ def approve_expense(request, pk):
         expense.status = 'approved'
         expense.approved_by = request.user
         expense.save()
-        if expense.complaint:
+        if expense.complaint and expense.complaint.status == 'budget_pending':
             c = expense.complaint
             c.status = 'budget_approved'
             c.save()
@@ -130,12 +152,14 @@ def approve_expense(request, pk):
             _notify(c.citizen, 'Budget Approved', f'Budget approved for your complaint "{c.title}". A worker will be assigned soon.', 'budget_approved', c)
         messages.success(request, f'Expense of BDT {expense.amount:,.0f} approved.')
     elif action == 'reject':
-        reason = request.POST.get('reason') or request.GET.get('reason', 'Insufficient budget or invalid estimate.')
+        reason = request.POST.get('reason', '').strip()
+        if not reason:
+            reason = 'Insufficient budget or invalid estimate.'
         expense.status = 'rejected'
         expense.rejection_reason = reason
         expense.approved_by = request.user
         expense.save()
-        if expense.complaint:
+        if expense.complaint and expense.complaint.status == 'budget_pending':
             c = expense.complaint
             c.status = 'rejected'
             c.save()

@@ -57,4 +57,29 @@
     </div>
   </div>
 </div>
+
+<!-- Password Change -->
+<div style="max-width:520px;margin-top:1.4rem">
+  <div class="card">
+    <h4 class="mb2">Change Password</h4>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="change_password">
+      <div class="fg">
+        <label class="label" for="id_old_pw">Current Password <span style="color:var(--r)">*</span></label>
+        <input class="input" type="password" name="old_password" id="id_old_pw" required autocomplete="current-password">
+      </div>
+      <div class="fg">
+        <label class="label" for="id_new_pw1">New Password <span style="color:var(--r)">*</span></label>
+        <input class="input" type="password" name="new_password1" id="id_new_pw1" required autocomplete="new-password">
+      </div>
+      <div class="fg">
+        <label class="label" for="id_new_pw2">Confirm New Password <span style="color:var(--r)">*</span></label>
+        <input class="input" type="password" name="new_password2" id="id_new_pw2" required autocomplete="new-password">
+      </div>
+      <p class="hint mb2">Password must be at least 8 characters.</p>
+      <button type="submit" class="btn btn-pr">Update Password</button>
+    </form>
+  </div>
+</div>
 {% endblock %}

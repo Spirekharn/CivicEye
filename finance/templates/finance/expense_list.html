@@ -16,9 +16,10 @@
         <td><span class="badge {% if exp.status == 'approved' %}b-resolved{% elif exp.status == 'rejected' %}b-rejected{% else %}b-budget_pending{% endif %}">{{ exp.status }}</span></td>
         <td>
           {% if exp.complaint %}<a href="{% url 'complaint_detail' exp.complaint.pk %}" class="btn btn-outline btn-sm">Complaint</a>{% endif %}
-          {% if exp.status == 'pending' and user.role == 'finance' or exp.status == 'pending' and user.role == 'super_admin' %}
+          {% if exp.status == 'pending' %}{% if user.role == 'finance' or user.role == 'super_admin' %}
           <form method="post" action="{% url 'approve_expense' exp.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="action" value="approve"><button type="submit" class="btn btn-green btn-sm">Approve</button></form>
-          {% endif %}
+          <form method="post" action="{% url 'approve_expense' exp.pk %}" style="display:inline" onsubmit="return confirm('Reject this expense? The complaint will be marked as rejected.')">{% csrf_token %}<input type="hidden" name="action" value="reject"><input type="hidden" name="reason" value="Rejected during expense review."><button type="submit" class="btn btn-red btn-sm" data-no-loading>Reject</button></form>
+          {% endif %}{% endif %}
         </td>
       </tr>
       {% empty %}<tr><td colspan="6" class="tc muted sm" style="padding:2rem">No expenses found.</td></tr>

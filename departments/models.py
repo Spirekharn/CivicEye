@@ -53,6 +53,10 @@ class Department(models.Model):
     name         = models.CharField(max_length=100)
     slug         = models.CharField(max_length=30, choices=SLUG_CHOICES)
     city_corp    = models.CharField(max_length=10, choices=CITY_CORP_CHOICES, default='DSCC')
+    # Future field: authority_code (CharField, blank=True)
+    # Will store codes like 'DESCO', 'DPDC', 'WASA' for non-municipal
+    # service providers once multi-authority routing is implemented.
+    # Planned migration: complaints/0005_dept_authority_code.py
     description  = models.TextField(blank=True)
     contact_email= models.EmailField(blank=True)
     is_active    = models.BooleanField(default=True)
@@ -66,15 +70,16 @@ class Department(models.Model):
 
     @property
     def total_budget(self):
-        b = self.budgets.filter(fiscal_year='2025-2026').first()
+        from finance.models import get_fiscal_year
+        b = self.budgets.filter(fiscal_year=get_fiscal_year()).first()
         return b.allocated_amount if b else 0
 
     @property
     def spent_budget(self):
-        from finance.models import Expense
+        from finance.models import Expense, get_fiscal_year
         from django.db.models import Sum
         total = Expense.objects.filter(
-            department=self, fiscal_year='2025-2026', status='approved'
+            department=self, fiscal_year=get_fiscal_year(), status='approved'
         ).aggregate(Sum('amount'))['amount__sum']
         return total or 0
 

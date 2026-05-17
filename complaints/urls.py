@@ -15,4 +15,7 @@ urlpatterns = [
     path('public/',                       views.public_dashboard,  name='public_dashboard'),
     path('transfers/',                    views.transfer_list,     name='transfer_list'),
     path('transfers/<int:pk>/review/',    views.transfer_review,   name='transfer_review'),
+    # Public community dashboard — no login required
+    path('community/',                    views.community_list,    name='community_list'),
+    path('community/<int:pk>/',           views.community_detail,  name='community_detail'),
 ]

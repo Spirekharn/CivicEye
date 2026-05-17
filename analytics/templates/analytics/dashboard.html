@@ -1,0 +1,269 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Analytics Dashboard{% endblock %}
+{% block content %}
+<div class="pg-hdr">
+  <div>
+    <h1>Analytics Dashboard</h1>
+    <p class="sub">Real-time complaint and budget insights across all city corporations</p>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:1.4rem; }
+.chart-full { margin-bottom:1.4rem; }
+.chart-card { background:var(--surf); border:1px solid var(--bdr); border-radius:var(--radius); padding:1.2rem; }
+.chart-title { font-weight:600; font-size:.92rem; margin-bottom:1rem; color:var(--text); }
+.chart-wrap { position:relative; }
+@media(max-width:680px){ .chart-grid { grid-template-columns:1fr; } }
+</style>
+
+<!-- Row 1: Category Pie + Status Doughnut -->
+<div class="chart-grid">
+  <div class="chart-card">
+    <div class="chart-title">Complaints by Category</div>
+    <div class="chart-wrap" style="height:280px"><canvas id="categoryChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Complaints by Status</div>
+    <div class="chart-wrap" style="height:280px"><canvas id="statusChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Row 2: Resolution Trend (30-day) -->
+<div class="chart-full">
+  <div class="chart-card">
+    <div class="chart-title">Resolutions Over Last 30 Days</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="trendChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Row 3: Department Performance -->
+<div class="chart-full">
+  <div class="chart-card">
+    <div class="chart-title">Department Resolution Rate (%)</div>
+    <div class="chart-wrap" style="height:320px"><canvas id="deptChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Row 4: Workload -->
+<div class="chart-grid">
+  <div class="chart-card">
+    <div class="chart-title">Top Surveyor Workload</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="surveyorChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Top Worker Workload</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="workerChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Row 5: Budget Utilisation (finance / super_admin only) -->
+{% if user.role == 'finance' or user.role == 'super_admin' %}
+<div class="chart-full">
+  <div class="chart-card">
+    <div class="chart-title">Budget Utilisation by Department <span class="xs muted" id="budgetFY"></span></div>
+    <div class="chart-wrap" style="height:320px"><canvas id="budgetChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Row 6: Monthly Volume by City Corp (finance / super_admin only) -->
+<div class="chart-full">
+  <div class="chart-card">
+    <div class="chart-title">Monthly Complaint Volume by City Corporation (last 6 months)</div>
+    <div class="chart-wrap" style="height:280px"><canvas id="volumeChart"></canvas></div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  // Read CSS variable colours so charts adapt to light/dark theme
+  var st = getComputedStyle(document.documentElement);
+  var C = {
+    pr:   st.getPropertyValue('--pr').trim()   || '#1E5631',
+    br:   st.getPropertyValue('--br').trim()   || '#9C6B1A',
+    g:    st.getPropertyValue('--g').trim()    || '#1E6B3A',
+    o:    st.getPropertyValue('--o').trim()    || '#B06018',
+    r:    st.getPropertyValue('--r').trim()    || '#9E2A2A',
+    t:    st.getPropertyValue('--t').trim()    || '#1A6878',
+    text: st.getPropertyValue('--text').trim() || '#18160F',
+    muted:st.getPropertyValue('--muted').trim()|| '#6A6660',
+    bdr:  st.getPropertyValue('--bdr').trim()  || 'rgba(0,0,0,0.09)',
+    surf: st.getPropertyValue('--surf').trim() || '#FFFCF6',
+  };
+
+  var PALETTE = [C.pr, C.br, C.g, C.o, C.r, C.t,
+    '#5C6BC0','#26A69A','#78909C','#EF5350','#AB47BC','#FFA726'];
+
+  var defaultFont = { family: 'inherit', size: 12, color: C.muted };
+
+  Chart.defaults.color = C.muted;
+  Chart.defaults.font  = defaultFont;
+  Chart.defaults.plugins.legend.labels.boxWidth = 12;
+
+  function pieOpts(cutout) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' } },
+      cutout: cutout || 0,
+    };
+  }
+
+  function barOpts(indexAxis, stacked) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: indexAxis || 'x',
+      plugins: { legend: { display: stacked || false } },
+      scales: {
+        x: { stacked: !!stacked, grid: { color: C.bdr }, ticks: { color: C.muted } },
+        y: { stacked: !!stacked, grid: { color: C.bdr }, ticks: { color: C.muted } },
+      },
+    };
+  }
+
+  function lineOpts() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: C.bdr }, ticks: { color: C.muted } },
+        y: { beginAtZero: true, grid: { color: C.bdr }, ticks: { color: C.muted } },
+      },
+    };
+  }
+
+  // 1. Category pie
+  fetch('{% url "api_by_category" %}')
+    .then(r => r.json()).then(function(res) {
+      var labels = res.data.map(d => d.category);
+      var counts = res.data.map(d => d.count);
+      new Chart(document.getElementById('categoryChart'), {
+        type: 'pie',
+        data: { labels: labels, datasets: [{ data: counts, backgroundColor: PALETTE }] },
+        options: pieOpts(),
+      });
+    });
+
+  // 2. Status doughnut
+  fetch('{% url "api_by_status" %}')
+    .then(r => r.json()).then(function(res) {
+      var labels = res.data.map(d => d.status);
+      var counts = res.data.map(d => d.count);
+      new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: { labels: labels, datasets: [{ data: counts, backgroundColor: PALETTE }] },
+        options: pieOpts('40%'),
+      });
+    });
+
+  // 3. Resolution trend line
+  fetch('{% url "api_resolution_trend" %}')
+    .then(r => r.json()).then(function(res) {
+      var labels = res.data.map(d => d.date);
+      var counts = res.data.map(d => d.count);
+      new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Resolved',
+            data: counts,
+            borderColor: C.g,
+            backgroundColor: C.g + '22',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+          }],
+        },
+        options: lineOpts(),
+      });
+    });
+
+  // 4. Department performance horizontal bar
+  fetch('{% url "api_dept_performance" %}')
+    .then(r => r.json()).then(function(res) {
+      var labels = res.data.map(d => d.department);
+      var pcts   = res.data.map(d => d.resolution_pct);
+      new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Resolution %',
+            data: pcts,
+            backgroundColor: pcts.map(p => p >= 70 ? C.g : p >= 40 ? C.o : C.r),
+          }],
+        },
+        options: barOpts('y'),
+      });
+    });
+
+  // 5. Workload
+  fetch('{% url "api_workload" %}')
+    .then(r => r.json()).then(function(res) {
+      new Chart(document.getElementById('surveyorChart'), {
+        type: 'bar',
+        data: {
+          labels: res.surveyors.map(d => d.name),
+          datasets: [{ label: 'Assignments', data: res.surveyors.map(d => d.count), backgroundColor: C.t }],
+        },
+        options: barOpts('y'),
+      });
+      new Chart(document.getElementById('workerChart'), {
+        type: 'bar',
+        data: {
+          labels: res.workers.map(d => d.name),
+          datasets: [{ label: 'Tasks', data: res.workers.map(d => d.count), backgroundColor: C.br }],
+        },
+        options: barOpts('y'),
+      });
+    });
+
+  {% if user.role == 'finance' or user.role == 'super_admin' %}
+  // 6. Budget utilisation
+  fetch('{% url "api_budget_utilisation" %}')
+    .then(r => r.json()).then(function(res) {
+      document.getElementById('budgetFY').textContent = '— FY ' + res.fiscal_year;
+      var labels     = res.data.map(d => d.department);
+      var allocated  = res.data.map(d => d.allocated);
+      var spent      = res.data.map(d => d.spent);
+      new Chart(document.getElementById('budgetChart'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Allocated', data: allocated, backgroundColor: C.pr + 'BB' },
+            { label: 'Spent',     data: spent,     backgroundColor: C.r  + 'BB' },
+          ],
+        },
+        options: barOpts('y', false),
+      });
+    });
+
+  // 7. Monthly volume stacked bar
+  fetch('{% url "api_monthly_volume" %}')
+    .then(r => r.json()).then(function(res) {
+      var datasets = res.datasets.map(function(ds, i) {
+        return {
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: PALETTE[i % PALETTE.length] + 'CC',
+          stack: 'vol',
+        };
+      });
+      new Chart(document.getElementById('volumeChart'), {
+        type: 'bar',
+        data: { labels: res.months, datasets: datasets },
+        options: barOpts('x', true),
+      });
+    });
+  {% endif %}
+}());
+</script>
+{% endblock %}

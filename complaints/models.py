@@ -55,13 +55,13 @@ class Complaint(models.Model):
 
     title       = models.CharField(max_length=200)
     description = models.TextField()
-    category    = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
-    status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    category    = models.CharField(max_length=30, choices=CATEGORY_CHOICES, db_index=True)
+    status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted', db_index=True)
     priority    = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
 
     citizen     = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='complaints')
     department  = models.ForeignKey('departments.Department', null=True, blank=True, on_delete=models.SET_NULL, related_name='complaints')
-    city_corp   = models.CharField(max_length=10, blank=True)
+    city_corp   = models.CharField(max_length=10, blank=True, db_index=True)
 
     location_text = models.CharField(max_length=300)
     latitude      = models.FloatField(null=True, blank=True)
@@ -79,16 +79,22 @@ class Complaint(models.Model):
     image            = models.ImageField(upload_to='complaints/images/', null=True, blank=True)
     completion_image = models.ImageField(upload_to='complaints/completion/', null=True, blank=True)
 
-    is_anonymous = models.BooleanField(default=False)
-    is_duplicate = models.BooleanField(default=False)
-    duplicate_of = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
+    is_anonymous    = models.BooleanField(default=False, db_index=True)
+    anonymous_alias = models.CharField(max_length=30, blank=True, db_index=True)
+    is_duplicate    = models.BooleanField(default=False, db_index=True)
+    duplicate_of    = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
 
     resolution_notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'department']),
+            models.Index(fields=['city_corp', 'category']),
+            models.Index(fields=['citizen', 'status']),
+        ]
 
     def __str__(self):
         return f"#{self.id} {self.title}"
@@ -99,6 +105,23 @@ class Complaint(models.Model):
     def required_worker_type(self):
         from departments.models import CATEGORY_WORKER_TYPE
         return CATEGORY_WORKER_TYPE.get(self.category, 'worker')
+
+    @staticmethod
+    def _generate_alias():
+        import random
+        import string
+        chars = string.ascii_uppercase + string.digits
+        for _ in range(100):
+            alias = 'Anon #' + ''.join(random.choices(chars, k=4))
+            if not Complaint.objects.filter(anonymous_alias=alias).exists():
+                return alias
+        # Fallback with 6 chars — collision probability is negligible
+        return 'Anon #' + ''.join(random.choices(chars, k=6))
+
+    def save(self, *args, **kwargs):
+        if self.is_anonymous and not self.anonymous_alias:
+            self.anonymous_alias = self._generate_alias()
+        super().save(*args, **kwargs)
 
 
 EVENT_TYPE_CHOICES = [
@@ -121,6 +144,9 @@ class ComplaintStatusHistory(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+    def __str__(self):
+        return f"#{self.complaint_id} → {self.status} ({self.event_type})"
 
 
 class ComplaintTransferRequest(models.Model):
@@ -161,6 +187,9 @@ class SurveyReport(models.Model):
     survey_image        = models.ImageField(upload_to='complaints/surveys/', null=True, blank=True)
     created_at          = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Survey for #{self.complaint_id} by {self.surveyor_id}"
+
 
 class ComplaintFeedback(models.Model):
     complaint  = models.OneToOneField(Complaint, on_delete=models.CASCADE, related_name='feedback')
@@ -168,3 +197,6 @@ class ComplaintFeedback(models.Model):
     rating     = models.PositiveSmallIntegerField(default=3)
     comment    = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback #{self.complaint_id}: {self.rating}/5"

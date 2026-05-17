@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Count, Q, Sum
 from .models import User
 from departments.models import Department
 from complaints.models import Complaint, ComplaintTransferRequest
+from finance.models import get_fiscal_year
 
 
 def home_view(request):
@@ -148,7 +150,7 @@ def register_view(request):
         pw1      = request.POST.get('password1', '')
         pw2      = request.POST.get('password2', '')
         dept_id  = request.POST.get('department')
-        VALID    = ['citizen', 'surveyor', 'worker', 'technician', 'admin']
+        VALID    = ['citizen', 'surveyor', 'worker', 'technician']
         if role not in VALID:
             role = 'citizen'
         ctx = {
@@ -164,14 +166,14 @@ def register_view(request):
         if pw1 != pw2:
             messages.error(request, 'Passwords do not match.')
             return render(request, 'accounts/register.html', ctx)
-        if len(pw1) < 6:
-            messages.error(request, 'Password must be at least 6 characters.')
+        if len(pw1) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
             return render(request, 'accounts/register.html', ctx)
         user = User.objects.create_user(
             username=username, email=email, password=pw1,
             first_name=fname, last_name=lname, role=role, phone=phone,
         )
-        if dept_id and role in ['surveyor', 'worker', 'technician', 'admin']:
+        if dept_id and role in ['surveyor', 'worker', 'technician']:
             try:
                 user.department = Department.objects.get(id=dept_id)
                 user.save(update_fields=['department'])
@@ -197,14 +199,19 @@ def login_view(request):
         if user:
             login(request, user)
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
-            return redirect(request.GET.get('next', 'dashboard'))
+            next_url = request.GET.get('next', '')
+            # only follow relative redirects to prevent open redirect attacks
+            if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+                return redirect(next_url)
+            return redirect('dashboard')
         messages.error(request, 'Invalid username or password.')
     return render(request, 'accounts/login.html')
 
 
 def logout_view(request):
-    logout(request)
-    messages.info(request, 'You have been signed out.')
+    if request.method == 'POST':
+        logout(request)
+        messages.info(request, 'You have been signed out.')
     return redirect('home')
 
 
@@ -265,7 +272,7 @@ def dashboard_view(request):
 
     elif u.role == 'finance':
         from finance.models import DepartmentBudget, Expense
-        fiscal = '2025-2026'
+        fiscal = get_fiscal_year()
         pending_expenses = Expense.objects.filter(status='pending').count()
         total_budget = DepartmentBudget.objects.filter(fiscal_year=fiscal).aggregate(
             Sum('allocated_amount'))['allocated_amount__sum'] or 0
@@ -273,6 +280,7 @@ def dashboard_view(request):
             Sum('amount'))['amount__sum'] or 0
         return render(request, 'accounts/dashboard.html', {
             'role_view': 'finance',
+            'fiscal_year': fiscal,
             'pending_expenses': pending_expenses,
             'total_budget': total_budget,
             'total_spent': total_spent,
@@ -302,12 +310,32 @@ def dashboard_view(request):
 def profile_view(request):
     if request.method == 'POST':
         u = request.user
+
         if request.POST.get('theme_only') == '1':
             new_theme = request.POST.get('theme', 'light')
             if new_theme in ('light', 'dark'):
                 u.theme = new_theme
                 u.save(update_fields=['theme'])
             return redirect(request.META.get('HTTP_REFERER') or 'dashboard')
+
+        if request.POST.get('action') == 'change_password':
+            from django.contrib.auth import update_session_auth_hash
+            old_pw  = request.POST.get('old_password', '')
+            new_pw1 = request.POST.get('new_password1', '')
+            new_pw2 = request.POST.get('new_password2', '')
+            if not u.check_password(old_pw):
+                messages.error(request, 'Current password is incorrect.')
+            elif len(new_pw1) < 8:
+                messages.error(request, 'New password must be at least 8 characters.')
+            elif new_pw1 != new_pw2:
+                messages.error(request, 'New passwords do not match.')
+            else:
+                u.set_password(new_pw1)
+                u.save()
+                update_session_auth_hash(request, u)
+                messages.success(request, 'Password changed successfully.')
+            return redirect('profile')
+
         u.first_name = request.POST.get('first_name', u.first_name).strip()
         u.last_name  = request.POST.get('last_name',  u.last_name).strip()
         u.email      = request.POST.get('email',      u.email).strip()
@@ -340,8 +368,14 @@ def admin_users_view(request):
         users = users.filter(
             Q(username__icontains=search) | Q(email__icontains=search) | Q(first_name__icontains=search)
         )
+    page_params = request.GET.copy()
+    page_params.pop('page', None)
+    paginator = Paginator(users, 20)
+    page_obj  = paginator.get_page(request.GET.get('page'))
     return render(request, 'accounts/admin_users.html', {
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
+        'page_params': page_params,
         'role_filter': role_f,
         'search': search,
         'roles': User.ROLE_CHOICES,
@@ -438,9 +472,9 @@ def superadmin_dashboard(request):
         'resolved': all_c.filter(status__in=['resolved', 'closed']).count(),
         'total_users': User.objects.count(),
         'total_depts': Department.objects.filter(is_active=True).count(),
-        'total_budget': DepartmentBudget.objects.filter(fiscal_year='2025-2026').aggregate(
+        'total_budget': DepartmentBudget.objects.filter(fiscal_year=get_fiscal_year()).aggregate(
             Sum('allocated_amount'))['allocated_amount__sum'] or 0,
-        'total_spent': Expense.objects.filter(fiscal_year='2025-2026', status='approved').aggregate(
+        'total_spent': Expense.objects.filter(fiscal_year=get_fiscal_year(), status='approved').aggregate(
             Sum('amount'))['amount__sum'] or 0,
         'recent_users': User.objects.order_by('-date_joined')[:8],
         'departments': Department.objects.filter(is_active=True).order_by('city_corp', 'name'),

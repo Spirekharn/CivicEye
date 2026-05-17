@@ -17,7 +17,7 @@
       {% csrf_token %}
       <div class="fg">
         <label class="label">Select {{ needed|capfirst }} <span style="color:var(--r)">*</span></label>
-        <select class="select" name="worker" required>
+        <select class="select" name="worker" required data-tomselect>
           <option value="">— Choose —</option>
           {% for w in workers %}
           <option value="{{ w.pk }}">{{ w.get_full_name }} (@{{ w.username }})</option>

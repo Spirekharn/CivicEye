@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q, Count
+from django.core.paginator import Paginator, InvalidPage
 from decimal import Decimal, InvalidOperation
 import math
 from .models import (Complaint, ComplaintStatusHistory, SurveyReport,
@@ -11,7 +13,7 @@ from .location_router import detect_city_corp, get_department_for_complaint
 from accounts.models import User
 from departments.models import Department, CITY_CORP_CHOICES
 from notifications.models import Notification
-from finance.models import Expense, DepartmentBudget
+from finance.models import Expense, DepartmentBudget, get_fiscal_year
 
 
 def _notify(user, title, msg, ntype, complaint=None):
@@ -75,6 +77,18 @@ def _parse_days(value):
     return days
 
 
+_MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+_ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+
+
+def _validate_image(uploaded_file):
+    """Raise ValueError if the uploaded file exceeds size or type limits."""
+    if uploaded_file.size > _MAX_UPLOAD_BYTES:
+        raise ValueError('Image must be no larger than 10 MB.')
+    if uploaded_file.content_type not in _ALLOWED_IMAGE_TYPES:
+        raise ValueError('Only JPG, PNG, WebP, or GIF images are accepted.')
+
+
 STATUS_CHOICES = [
     ('submitted', 'Submitted'), ('under_review', 'Under Review'), ('assigned', 'Assigned'),
     ('surveying', 'Surveying'), ('survey_done', 'Survey Done'), ('budget_pending', 'Budget Pending'),
@@ -118,8 +132,16 @@ def complaint_list(request):
     if cat_f:
         qs = qs.filter(category=cat_f)
 
+    page_params = request.GET.copy()
+    page_params.pop('page', None)
+    qs = qs.select_related('department', 'citizen').order_by('-created_at')
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'complaints/list.html', {
-        'complaints': qs.order_by('-created_at'),
+        'complaints': page_obj,
+        'page_obj': page_obj,
+        'page_params': page_params,
         'status_choices': STATUS_CHOICES,
         'category_choices': CATEGORY_CHOICES,
     })
@@ -177,7 +199,12 @@ def complaint_create(request):
                 messages.error(request, 'Longitude must be a valid number.')
                 return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
         if request.FILES.get('image'):
-            c.image = request.FILES['image']
+            try:
+                _validate_image(request.FILES['image'])
+                c.image = request.FILES['image']
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return render(request, 'complaints/create.html', _complaint_form_context(request.POST))
         c.save()
         _log(c, 'submitted', request.user, 'Complaint submitted.')
 
@@ -189,6 +216,26 @@ def complaint_create(request):
                 _notify(sa, 'Unrouted Complaint', f'Could not route complaint in {city_corp}: {c.title}', 'complaint_submitted', c)
 
         _run_duplicate_check(c, request.user)
+
+        # send a quick acknowledgment to the citizen if they have an email on file
+        if not c.is_anonymous and c.citizen.email:
+            try:
+                from django.core.mail import send_mail
+                send_mail(
+                    subject=f'[CivicEye] Complaint received — {c.title}',
+                    message=(
+                        f'Hi {c.citizen.first_name or c.citizen.username},\n\n'
+                        f'Your complaint "{c.title}" has been received.\n'
+                        f'Reference ID: #{c.pk}\n\n'
+                        f'You can track progress at: /complaints/{c.pk}/\n\n'
+                        f'— CivicEye Team'
+                    ),
+                    from_email=None,
+                    recipient_list=[c.citizen.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass  # never crash the complaint submission because of email
 
         messages.success(request, f'Complaint submitted! Routed to {city_corp} — {dept.name if dept else "system"}.')
         return redirect('complaint_detail', pk=c.pk)
@@ -361,6 +408,45 @@ def complaint_detail(request, pk):
                 messages.error(request, 'Invalid complaint ID for merge.')
             return redirect('complaint_detail', pk=pk)
 
+    if request.method == 'POST' and request.POST.get('action') == 'surveyor_reject':
+        if u.role == 'surveyor' and c.assigned_surveyor == u and c.status in ('assigned', 'surveying'):
+            reason = request.POST.get('reject_reason', '').strip()
+            if not reason:
+                messages.error(request, 'Please provide a reason for rejection.')
+            else:
+                c.status = 'rejected'
+                c.save(update_fields=['status', 'updated_at'])
+                _log(c, 'rejected', u, f'Surveyor marked complaint as invalid. Reason: {reason}')
+                _notify(c.citizen, 'Complaint Rejected',
+                        f'Your complaint "{c.title}" could not be verified on-site. Reason: {reason}',
+                        'general', c)
+                if c.department:
+                    for admin in User.objects.filter(role='admin', department=c.department, is_active=True):
+                        _notify(admin, 'Complaint Rejected by Surveyor',
+                                f'Surveyor marked "{c.title}" as invalid. Reason: {reason}',
+                                'general', c)
+                messages.success(request, 'Complaint marked as invalid.')
+            return redirect('complaint_detail', pk=pk)
+
+    if request.method == 'POST' and request.POST.get('action') == 'request_resurvey':
+        if u.role in ('worker', 'technician') and c.assigned_worker == u and c.status in ('worker_assigned', 'in_progress'):
+            reason = request.POST.get('resurvey_reason', '').strip()
+            if not reason:
+                messages.error(request, 'Please describe why a resurvey is needed.')
+            else:
+                c.status = 'under_review'
+                c.assigned_worker = None
+                c.assigned_surveyor = None
+                c.save(update_fields=['status', 'assigned_worker', 'assigned_surveyor', 'updated_at'])
+                _log(c, 'under_review', u, f'Worker requested resurvey. Reason: {reason}')
+                if c.department:
+                    for admin in User.objects.filter(role='admin', department=c.department, is_active=True):
+                        _notify(admin, 'Resurvey Requested',
+                                f'Worker flagged "{c.title}" as needing resurvey. Reason: {reason}',
+                                'general', c)
+                messages.success(request, 'Resurvey request submitted. Admin has been notified.')
+            return redirect('complaint_detail', pk=pk)
+
     dept_surveyors = []
     dept_workers = []
     if u.role in ('admin', 'super_admin') and c.department:
@@ -383,6 +469,14 @@ def complaint_detail(request, pk):
     from django.conf import settings
     hotline = settings.CITY_CORP_HOTLINES.get(c.city_corp, settings.CITY_CORP_HOTLINES['default'])
 
+    show_actual_budget = u.role in ('admin', 'finance', 'super_admin')
+    survey_cost_range = None
+    if survey and not show_actual_budget:
+        cost = float(survey.estimated_cost)
+        low  = round(cost * 0.70 / 1000) * 1000
+        high = round(cost * 1.30 / 1000) * 1000
+        survey_cost_range = (low, high)
+
     return render(request, 'complaints/detail.html', {
         'c': c, 'history': history, 'survey': survey,
         'feedback': feedback, 'expense': expense,
@@ -395,6 +489,8 @@ def complaint_detail(request, pk):
         'pending_transfer': pending_transfer,
         'transfer_requests': transfer_requests,
         'hotline': hotline,
+        'show_actual_budget': show_actual_budget,
+        'survey_cost_range': survey_cost_range,
     })
 
 
@@ -414,21 +510,36 @@ def admin_complaints(request):
     prio_f   = request.GET.get('priority', '')
     corp_f   = request.GET.get('corp', '')
 
-    if q:        qs = qs.filter(Q(title__icontains=q) | Q(location_text__icontains=q) | Q(citizen__username__icontains=q))
+    if q:        qs = qs.filter(Q(title__icontains=q) | Q(location_text__icontains=q) | Q(citizen__username__icontains=q))  # noqa: E501
     if status_f: qs = qs.filter(status=status_f)
     if cat_f:    qs = qs.filter(category=cat_f)
     if prio_f:   qs = qs.filter(priority=prio_f)
     if corp_f:   qs = qs.filter(city_corp=corp_f)
 
+    page_params = request.GET.copy()
+    page_params.pop('page', None)
+
+    # stats based on the full dept-scoped queryset, not the current search filters
+    base_qs = (
+        Complaint.objects.filter(Q(department=u.department) | Q(department__isnull=True))
+        if u.role == 'admin' else Complaint.objects.all()
+    )
+
+    qs = qs.select_related('department', 'citizen').order_by('-created_at')
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'complaints/admin_list.html', {
-        'complaints': qs.order_by('-created_at'),
+        'complaints': page_obj,
+        'page_obj': page_obj,
+        'page_params': page_params,
         'status_choices': STATUS_CHOICES,
         'category_choices': CATEGORY_CHOICES,
-        'corps': Complaint.objects.values_list('city_corp', flat=True).distinct(),
-        'total': qs.count(),
-        'pending': qs.filter(status__in=['submitted', 'under_review']).count(),
-        'in_progress': qs.filter(status='in_progress').count(),
-        'resolved': qs.filter(status__in=['resolved', 'closed']).count(),
+        'corps': Complaint.objects.exclude(city_corp='').values_list('city_corp', flat=True).distinct(),
+        'total': base_qs.count(),
+        'pending': base_qs.filter(status__in=['submitted', 'under_review']).count(),
+        'in_progress': base_qs.filter(status='in_progress').count(),
+        'resolved': base_qs.filter(status__in=['resolved', 'closed']).count(),
     })
 
 
@@ -498,7 +609,7 @@ def assign_worker(request, pk):
         return redirect('dashboard')
     c = get_object_or_404(Complaint, pk=pk)
     u = request.user
-    if u.role == 'admin' and c.department != u.department:
+    if u.role == 'admin' and c.department and c.department != u.department:
         messages.error(request, 'Access denied.')
         return redirect('admin_complaints')
     needed = c.required_worker_type()
@@ -508,6 +619,10 @@ def assign_worker(request, pk):
         wid   = request.POST.get('worker')
         notes = request.POST.get('notes', '')
         if wid:
+            # Enforce: worker assignment requires budget_approved status
+            if c.status != 'budget_approved':
+                messages.error(request, 'Worker can only be assigned after budget has been approved.')
+                return redirect('complaint_detail', pk=pk)
             w = get_object_or_404(User, id=wid, role=needed, department=c.department, is_active=True)
             c.assigned_worker = w
             c.status = 'worker_assigned'
@@ -536,6 +651,11 @@ def submit_survey(request, pk):
         return redirect('dashboard')
     c = get_object_or_404(Complaint, pk=pk, assigned_surveyor=request.user)
 
+    # Enforce: survey can only be submitted when complaint is in assigned or surveying state
+    if c.status not in ('assigned', 'surveying'):
+        messages.error(request, 'Survey can only be submitted for complaints in assigned or surveying status.')
+        return redirect('complaint_detail', pk=pk)
+
     if request.method == 'POST':
         findings  = request.POST.get('findings', '').strip()
         materials = request.POST.get('materials_needed', '').strip()
@@ -554,35 +674,53 @@ def submit_survey(request, pk):
             return render(request, 'complaints/survey_form.html', {'c': c})
 
         total = labour + equip + misc
-        sr = SurveyReport.objects.create(
-            complaint=c, surveyor=request.user, findings=findings,
-            materials_needed=materials, labor_estimate=labour,
-            equipment_estimate=equip, misc_estimate=misc,
-            estimated_cost=total, priority_recommendation=prio_rec,
-            estimated_days=days,
-        )
-        if request.FILES.get('survey_image'):
-            sr.survey_image = request.FILES['survey_image']
-            sr.save()
 
-        c.status = 'survey_done'
-        c.priority = prio_rec
-        c.save()
-        _log(c, 'survey_done', request.user, f'Survey completed. Estimated cost: BDT {total:,.0f}.')
+        # validate survey image before entering the atomic block
+        survey_img = request.FILES.get('survey_image')
+        if survey_img:
+            try:
+                _validate_image(survey_img)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return render(request, 'complaints/survey_form.html', {'c': c})
 
-        if c.department:
-            from finance.models import Expense
-            fiscal = '2025-2026'
-            if not Expense.objects.filter(complaint=c).exists():
-                Expense.objects.create(
-                    title=f'Survey estimate: {c.title[:80]}',
-                    department=c.department, complaint=c,
-                    amount=total, fiscal_year=fiscal, status='pending',
-                )
-                c.status = 'budget_pending'
-                c.save()
-                _log(c, 'budget_pending', request.user, 'Expense created, awaiting budget approval.')
+        with transaction.atomic():
+            sr, _ = SurveyReport.objects.update_or_create(
+                complaint=c,
+                defaults={
+                    'surveyor': request.user,
+                    'findings': findings,
+                    'materials_needed': materials,
+                    'labor_estimate': labour,
+                    'equipment_estimate': equip,
+                    'misc_estimate': misc,
+                    'estimated_cost': total,
+                    'priority_recommendation': prio_rec,
+                    'estimated_days': days,
+                }
+            )
+            if survey_img:
+                sr.survey_image = survey_img
+                sr.save()
 
+            c.status = 'survey_done'
+            c.priority = prio_rec
+            c.save()
+            _log(c, 'survey_done', request.user, f'Survey completed. Estimated cost: BDT {total:,.0f}.')
+
+            if c.department:
+                fiscal = get_fiscal_year()
+                if not Expense.objects.filter(complaint=c).exists():
+                    Expense.objects.create(
+                        title=f'Survey estimate: {c.title[:80]}',
+                        department=c.department, complaint=c,
+                        amount=total, fiscal_year=fiscal, status='pending',
+                    )
+                    c.status = 'budget_pending'
+                    c.save()
+                    _log(c, 'budget_pending', request.user, 'Expense created, awaiting budget approval.')
+
+        # notifications go outside the atomic block
         if c.department:
             for admin in User.objects.filter(role='admin', department=c.department, is_active=True):
                 _notify(admin, 'Survey Completed',
@@ -638,11 +776,25 @@ def update_status(request, pk):
             messages.error(request, 'Invalid status transition.')
             return redirect('complaint_detail', pk=pk)
 
+        # Workers/technicians must go through in_progress before resolving
+        if u.role in ('worker', 'technician'):
+            if new_status == 'in_progress' and c.status != 'worker_assigned':
+                messages.error(request, 'Cannot move to in progress from the current status.')
+                return redirect('complaint_detail', pk=pk)
+            if new_status == 'resolved' and c.status != 'in_progress':
+                messages.error(request, 'Please mark the task as In Progress first before resolving.')
+                return redirect('complaint_detail', pk=pk)
+
         c.status = new_status
         if new_status == 'resolved' and notes:
             c.resolution_notes = notes
         if new_status == 'resolved' and request.FILES.get('completion_image'):
-            c.completion_image = request.FILES['completion_image']
+            try:
+                _validate_image(request.FILES['completion_image'])
+                c.completion_image = request.FILES['completion_image']
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect('complaint_detail', pk=pk)
         c.save()
         _log(c, new_status, u, notes or f'Status changed to {new_status} by {u.get_full_name()}.')
 
@@ -673,24 +825,32 @@ def public_dashboard(request):
                     'worker_assigned', 'in_progress']
     ).count()
 
-    category_stats = []
-    for slug, label in CATEGORY_CHOICES:
-        count = Complaint.objects.filter(category=slug).count()
-        if count:
-            pct = round((count / total * 100) if total else 0)
-            category_stats.append({'label': label, 'count': count, 'pct': pct})
-    category_stats.sort(key=lambda x: x['count'], reverse=True)
+    # use aggregation to avoid N+1 queries per category/corp
+    cat_label_map = dict(CATEGORY_CHOICES)
+    cat_counts = (Complaint.objects.values('category')
+                  .annotate(count=Count('id'))
+                  .order_by('-count'))
+    category_stats = [
+        {'label': cat_label_map.get(row['category'], row['category']),
+         'count': row['count'],
+         'pct': round((row['count'] / total * 100) if total else 0)}
+        for row in cat_counts if row['count']
+    ]
 
-    corp_stats = []
-    for code, name in CITY_CORP_CHOICES:
-        count = Complaint.objects.filter(city_corp=code).count()
-        if count:
-            corp_stats.append({'code': code, 'name': name, 'count': count})
-    corp_stats.sort(key=lambda x: x['count'], reverse=True)
+    corp_name_map = dict(CITY_CORP_CHOICES)
+    corp_counts = (Complaint.objects.values('city_corp')
+                   .annotate(count=Count('id'))
+                   .order_by('-count'))
+    corp_stats = [
+        {'code': row['city_corp'],
+         'name': corp_name_map.get(row['city_corp'], row['city_corp']),
+         'count': row['count']}
+        for row in corp_counts if row['count']
+    ]
 
     recent_resolved = Complaint.objects.filter(
         status__in=['resolved', 'closed']
-    ).order_by('-updated_at')[:10]
+    ).select_related('department').order_by('-updated_at')[:10]
 
     return render(request, 'complaints/public_dashboard.html', {
         'total': total,
@@ -730,16 +890,22 @@ def transfer_review(request, pk):
         action = request.POST.get('action')
         if action == 'approve' and tr.status == 'pending':
             old_dept = tr.complaint.department
-            tr.complaint.department = tr.to_department
-            tr.complaint.city_corp = tr.to_department.city_corp
-            tr.complaint.save(update_fields=['department', 'city_corp', 'updated_at'])
-            tr.status = 'approved'
-            tr.reviewed_by = request.user
-            tr.save()
-            _log_event(tr.complaint, tr.complaint.status, request.user,
-                       f'Transfer approved from {old_dept.name} to {tr.to_department.name}.',
-                       'transfer_approved')
-            for admin in User.objects.filter(role='admin', department=tr.to_department, is_active=True):
+            with transaction.atomic():
+                tr.complaint.department = tr.to_department
+                tr.complaint.city_corp = tr.to_department.city_corp
+                tr.complaint.save(update_fields=['department', 'city_corp', 'updated_at'])
+                tr.status = 'approved'
+                tr.reviewed_by = request.user
+                tr.save()
+                _log_event(tr.complaint, tr.complaint.status, request.user,
+                           f'Transfer approved from {old_dept.name} to {tr.to_department.name}.',
+                           'transfer_approved')
+            # notifications outside the atomic block
+            heads = User.objects.filter(role='admin', department=tr.to_department,
+                                        is_active=True, is_department_head=True)
+            notify_targets = heads if heads.exists() else User.objects.filter(
+                role='admin', department=tr.to_department, is_active=True)
+            for admin in notify_targets:
                 _notify(admin, 'Complaint Transferred',
                         f'Complaint "{tr.complaint.title}" has been transferred to your department.',
                         'transfer_approved', tr.complaint)
@@ -754,13 +920,14 @@ def transfer_review(request, pk):
 
         elif action == 'reject' and tr.status == 'pending':
             reason = request.POST.get('rejection_reason', '').strip()
-            tr.status = 'rejected'
-            tr.reviewed_by = request.user
-            tr.rejection_reason = reason
-            tr.save()
-            _log_event(tr.complaint, tr.complaint.status, request.user,
-                       f'Transfer to {tr.to_department.name} rejected. Reason: {reason}',
-                       'transfer_rejected')
+            with transaction.atomic():
+                tr.status = 'rejected'
+                tr.reviewed_by = request.user
+                tr.rejection_reason = reason
+                tr.save()
+                _log_event(tr.complaint, tr.complaint.status, request.user,
+                           f'Transfer to {tr.to_department.name} rejected. Reason: {reason}',
+                           'transfer_rejected')
             _notify(tr.requested_by, 'Transfer Rejected',
                     f'Transfer request for "{tr.complaint.title}" was rejected. Reason: {reason}',
                     'transfer_rejected', tr.complaint)
@@ -769,3 +936,120 @@ def transfer_review(request, pk):
         return redirect('transfer_list')
 
     return render(request, 'complaints/transfer_review.html', {'tr': tr})
+
+
+_COMMUNITY_PAGE_SIZE = 18
+_PUBLIC_EVENT_TYPES = {'status_change', 'merged_as_primary', 'merged_as_duplicate'}
+
+
+def community_list(request):
+    # Browse all complaints without needing to log in.
+    # Only public-safe fields are exposed.
+    from departments.models import CITY_CORP_CHOICES
+
+    qs = (
+        Complaint.objects
+        .select_related('department')
+        .order_by('-created_at')
+    )
+
+    q        = request.GET.get('q', '').strip()
+    cat_f    = request.GET.get('category', '').strip()
+    status_f = request.GET.get('status', '').strip()
+    corp_f   = request.GET.get('city_corp', '').strip()
+    sort_f   = request.GET.get('sort', 'newest').strip()
+
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(location_text__icontains=q) |
+            Q(description__icontains=q)
+        )
+    if cat_f and cat_f in dict(CATEGORY_CHOICES):
+        qs = qs.filter(category=cat_f)
+    if status_f and status_f in dict(STATUS_CHOICES):
+        qs = qs.filter(status=status_f)
+    if corp_f and corp_f in dict(CITY_CORP_CHOICES):
+        qs = qs.filter(city_corp=corp_f)
+
+    sort_map = {
+        'newest':   '-created_at',
+        'oldest':   'created_at',
+        'updated':  '-updated_at',
+    }
+    qs = qs.order_by(sort_map.get(sort_f, '-created_at'))
+
+    paginator = Paginator(qs, _COMMUNITY_PAGE_SIZE)
+    try:
+        page_obj = paginator.page(request.GET.get('page', 1))
+    except InvalidPage:
+        page_obj = paginator.page(1)
+
+    return render(request, 'complaints/community_list.html', {
+        'page_obj':         page_obj,
+        'q':                q,
+        'cat_f':            cat_f,
+        'status_f':         status_f,
+        'corp_f':           corp_f,
+        'sort_f':           sort_f,
+        'category_choices': CATEGORY_CHOICES,
+        'status_choices':   STATUS_CHOICES,
+        'corp_choices':     CITY_CORP_CHOICES,
+        'total_count':      paginator.count,
+    })
+
+
+def community_detail(request, pk):
+    # Public complaint detail — no login needed.
+    # Identity, exact costs, internal notes, and finance data are kept private.
+    complaint = get_object_or_404(
+        Complaint.objects.select_related('department'),
+        pk=pk,
+    )
+
+    # Strip internal notes and actor identity from the public timeline
+    raw_history = (
+        complaint.history
+        .only('status', 'event_type', 'created_at')
+        .order_by('created_at')
+    )
+    public_history = [
+        {
+            'status':         h.status,
+            'status_display': h.get_status_display(),
+            'event_type':     h.event_type,
+            'created_at':     h.created_at,
+        }
+        for h in raw_history
+        if h.event_type in _PUBLIC_EVENT_TYPES
+    ]
+
+    # Show a rough cost range instead of the exact surveyed amount
+    survey_cost_range = None
+    try:
+        survey = complaint.survey_report  # OneToOne — raises if absent
+        cost = float(survey.estimated_cost)
+        if cost > 0:
+            low  = round(cost * 0.70 / 1000) * 1000
+            high = round(cost * 1.30 / 1000) * 1000
+            survey_cost_range = (low, high)
+    except Exception:
+        pass
+
+    if complaint.is_anonymous:
+        reporter_label = complaint.anonymous_alias or 'Anonymous'
+    else:
+        reporter_label = 'Community Member'
+
+    primary_complaint = None
+    if complaint.is_duplicate and complaint.duplicate_of_id:
+        primary_complaint = complaint.duplicate_of
+
+    return render(request, 'complaints/community_detail.html', {
+        'c':               complaint,
+        'history':         public_history,
+        'survey_cost_range': survey_cost_range,
+        'reporter_label':  reporter_label,
+        'progress':        complaint.get_status_progress(),
+        'primary':         primary_complaint,
+    })

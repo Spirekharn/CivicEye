@@ -83,7 +83,7 @@
         <label class="label" for="rejection_reason">Reason for Rejection <span>*</span></label>
         <textarea name="rejection_reason" id="rejection_reason" class="textarea" rows="3" placeholder="Explain why this transfer is not being approved..." required></textarea>
       </div>
-      <button type="submit" class="btn btn-red btn-full">Reject Transfer</button>
+      <button type="submit" class="btn btn-red btn-full" onclick="return confirm('Reject this transfer request?')">Reject Transfer</button>
     </form>
   </div>
 </div>

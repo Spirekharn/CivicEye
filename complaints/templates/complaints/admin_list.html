@@ -70,4 +70,15 @@
   <div class="empty"><div class="empty-ico">📭</div><h3>No complaints found</h3></div>
   {% endif %}
 </div>
+{% if page_obj.has_other_pages %}
+<div class="flex-c gap-1 mt3" style="justify-content:center">
+  {% if page_obj.has_previous %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+  {% endif %}
+  <span class="xs muted mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?{{ page_params.urlencode }}&page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

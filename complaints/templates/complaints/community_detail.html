@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}{{ c.title|truncatechars:50 }}{% endblock %}
+
+{% block content %}
+<div class="section" style="padding-top:2.4rem;padding-bottom:4rem">
+
+  <!-- ── Breadcrumb ──────────────────────────────────────────── -->
+  <div class="comm-detail-breadcrumb">
+    <a href="{% url 'community_list' %}" style="color:var(--pr);font-weight:600">&larr; Community Reports</a>
+    <span style="color:var(--bdr-med)">/</span>
+    <span class="mono" style="font-size:.75rem">Report #{{ c.pk }}</span>
+  </div>
+
+  <!-- ── Duplicate notice ────────────────────────────────────── -->
+  {% if c.is_duplicate %}
+  <div class="alert warning mb2" style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.4rem">
+    <span style="font-size:1.1rem">⚠️</span>
+    <div>
+      This report was automatically identified as a <strong>duplicate</strong>.
+      {% if primary %}
+      <a href="{% url 'community_detail' primary.pk %}"
+         style="color:var(--pr);font-weight:600;margin-left:.4rem">
+        View primary report #{{ primary.pk }} →
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Page header ─────────────────────────────────────────── -->
+  <div class="comm-detail-hdr">
+    <h1>{{ c.title }}</h1>
+    <div class="comm-detail-badges">
+      <span class="badge b-{{ c.status }}">{{ c.get_status_display }}</span>
+      {% if c.priority == 'critical' %}<span class="badge b-rejected">Critical Priority</span>
+      {% elif c.priority == 'high' %}<span class="badge b-budget_pending">High Priority</span>
+      {% elif c.priority == 'medium' %}<span class="badge">Medium Priority</span>
+      {% else %}<span class="badge">Low Priority</span>
+      {% endif %}
+      <span class="badge b-teal">{{ c.city_corp }}</span>
+      {% if c.is_duplicate %}<span class="badge" style="background:var(--ol);color:var(--o)">Duplicate</span>{% endif %}
+    </div>
+    <div class="comm-detail-info">
+      <span>{{ c.get_category_display }}</span>
+      <span class="comm-detail-info-sep">·</span>
+      <span>Reported {{ c.created_at|date:"d M Y" }}</span>
+      <span class="comm-detail-info-sep">·</span>
+      <span>Reported by <strong style="color:var(--text2)">{{ reporter_label }}</strong></span>
+      {% if c.department %}
+      <span class="comm-detail-info-sep">·</span>
+      <span>Dept: <strong style="color:var(--text2)">{{ c.department.name }}</strong></span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Two-column content grid (3fr main / 2fr sidebar) ────── -->
+  <div class="comm-detail-grid">
+
+    <!-- ──── LEFT: Main content ──────────────────────────────── -->
+    <div class="comm-detail-main">
+
+      <!-- Evidence image -->
+      {% if c.image %}
+      <div class="card" style="padding:0;overflow:hidden">
+        <img src="{{ c.image.url }}" alt="Evidence photo"
+             style="width:100%;max-height:380px;object-fit:cover;display:block">
+        <div style="padding:.55rem 1.1rem;font-size:.75rem;color:var(--muted);
+                    border-top:1px solid var(--bdr);display:flex;align-items:center;gap:.4rem">
+          <span>📷</span> Evidence photo submitted with this complaint
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Description -->
+      <div class="card">
+        <div class="comm-slabel">Description</div>
+        <p style="line-height:1.85;white-space:pre-line;color:var(--text);font-size:.925rem;margin:0">
+          {{ c.description }}
+        </p>
+      </div>
+
+      <!-- Location details -->
+      <div class="card">
+        <div class="comm-slabel">Location Details</div>
+        <div class="comm-loc-grid">
+          <div>
+            <div class="comm-loc-label">Area / Address</div>
+            <div class="comm-loc-val">{{ c.location_text }}</div>
+          </div>
+          <div>
+            <div class="comm-loc-label">City Corporation</div>
+            <div class="comm-loc-val">
+              <span class="badge b-teal" style="font-size:.72rem">{{ c.city_corp }}</span>
+            </div>
+          </div>
+          <div>
+            <div class="comm-loc-label">Category</div>
+            <div class="comm-loc-val">{{ c.get_category_display }}</div>
+          </div>
+          {% if c.department %}
+          <div>
+            <div class="comm-loc-label">Handling Department</div>
+            <div class="comm-loc-val">{{ c.department.name }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Estimated cost range -->
+      {% if survey_cost_range %}
+      <div class="card">
+        <div class="comm-slabel">Estimated Repair Cost</div>
+        <div class="comm-cost-box">
+          <span class="comm-cost-amt">৳{{ survey_cost_range.0|floatformat:0 }}</span>
+          <span class="comm-cost-sep">—</span>
+          <span class="comm-cost-amt">৳{{ survey_cost_range.1|floatformat:0 }}</span>
+        </div>
+        <div class="comm-cost-note">
+          Approximate range from technical survey assessment (±30%).
+          Exact allocation is subject to departmental budget approval.
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Completion image -->
+      {% if c.status == 'resolved' or c.status == 'closed' %}
+      {% if c.completion_image %}
+      <div class="card" style="padding:0;overflow:hidden">
+        <img src="{{ c.completion_image.url }}" alt="Completion photo"
+             style="width:100%;max-height:300px;object-fit:cover;display:block">
+        <div style="padding:.55rem 1.1rem;font-size:.75rem;color:var(--muted);
+                    border-top:1px solid var(--bdr);display:flex;align-items:center;gap:.4rem">
+          <span>✅</span> Completion photo — work confirmed resolved
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+    </div>
+
+    <!-- ──── RIGHT: Progress + Timeline ──────────────────────── -->
+    <div class="comm-detail-sidebar">
+
+      <!-- Progress card -->
+      <div class="card">
+        <div class="comm-slabel">Resolution Progress</div>
+        <div class="comm-prog-row">
+          <span class="badge b-{{ c.status }}" style="font-size:.75rem">{{ c.get_status_display }}</span>
+          <span class="mono" style="font-size:.82rem;font-weight:700;color:var(--text2)">{{ progress }}%</span>
+        </div>
+        <div class="comm-prog-bar">
+          <div class="comm-prog-fill
+            {% if c.status == 'resolved' or c.status == 'closed' %}pf-resolved
+            {% elif c.status == 'rejected' %}pf-rejected{% endif %}"
+            style="width:{{ progress }}%"></div>
+        </div>
+        <div class="comm-prog-note">
+          {% if c.status == 'submitted' %}Complaint received — awaiting department review.
+          {% elif c.status == 'under_review' %}A department administrator is reviewing this complaint.
+          {% elif c.status == 'assigned' %}A surveyor has been assigned to assess this issue on-site.
+          {% elif c.status == 'surveying' %}The surveyor is currently conducting an on-site assessment.
+          {% elif c.status == 'survey_done' %}Survey complete — cost assessment is being processed.
+          {% elif c.status == 'budget_pending' %}Waiting for budget approval from the Finance department.
+          {% elif c.status == 'budget_approved' %}Budget approved — a field worker is being assigned.
+          {% elif c.status == 'worker_assigned' %}A field worker has been assigned and will begin work shortly.
+          {% elif c.status == 'in_progress' %}Repair work is currently underway at this location.
+          {% elif c.status == 'resolved' %}This issue has been resolved. Thank you for reporting.
+          {% elif c.status == 'closed' %}This complaint has been officially closed.
+          {% elif c.status == 'rejected' %}This complaint was reviewed and could not be actioned.
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Status timeline -->
+      {% if history %}
+      <div class="card">
+        <div class="comm-slabel">Status Timeline</div>
+        <ul class="comm-tl">
+          {% for item in history %}
+          <li class="comm-tl-item">
+            <div class="comm-tl-track">
+              <div class="comm-tl-dot
+                {% if item.status == 'resolved' or item.status == 'closed' %}tld-resolved
+                {% elif item.status == 'rejected' %}tld-rejected
+                {% elif forloop.last %}tld-active
+                {% endif %}">
+              </div>
+              {% if not forloop.last %}
+              <div class="comm-tl-line"></div>
+              {% endif %}
+            </div>
+            <div class="comm-tl-body">
+              <div class="comm-tl-status">{{ item.status_display }}</div>
+              {% if item.event_type == 'merged_as_duplicate' %}
+              <div class="comm-tl-note">Similar reports merged</div>
+              {% elif item.event_type == 'merged_as_primary' %}
+              <div class="comm-tl-note">Additional reports linked</div>
+              {% endif %}
+              <div class="comm-tl-date">{{ item.created_at|date:"d M Y, g:i A" }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Key dates -->
+      <div class="card">
+        <div class="comm-slabel">Key Dates</div>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span style="color:var(--muted)">Filed</span>
+            <span style="font-weight:600;color:var(--text)">{{ c.created_at|date:"d M Y" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span style="color:var(--muted)">Last updated</span>
+            <span style="font-weight:600;color:var(--text)">{{ c.updated_at|date:"d M Y" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span style="color:var(--muted)">Category</span>
+            <span style="font-weight:600;color:var(--text)">{{ c.get_category_display }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy note -->
+      <div class="comm-privacy-note">
+        <strong style="color:var(--text2);font-size:.8rem">Privacy & Transparency</strong><br>
+        Citizen identities are protected. Anonymous reports use a generated alias.
+        Internal admin notes and exact budget data are not shown publicly.
+        This report is part of CivicEye's civic accountability framework.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Footer navigation ───────────────────────────────────── -->
+  <div style="margin-top:2.5rem;padding-top:1.3rem;border-top:1px solid var(--bdr);
+              display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+    <a href="{% url 'community_list' %}" class="btn btn-outline btn-sm">
+      &larr; Back to Community Reports
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'complaint_create' %}" class="btn btn-pr btn-sm">+ Report a Similar Issue</a>
+    {% else %}
+    <a href="{% url 'register' %}" class="btn btn-pr btn-sm">Register to Report</a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

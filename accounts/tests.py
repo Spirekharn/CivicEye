@@ -96,3 +96,63 @@ class DepartmentAllocationTests(TestCase):
         self.assertRedirects(response, reverse('admin_users'))
         self.worker.refresh_from_db()
         self.assertIsNone(self.worker.department)
+
+
+# ---------------------------------------------------------------------------
+# Registration Tests
+# ---------------------------------------------------------------------------
+
+class RegistrationTests(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(
+            name='Roads DSCC', slug='roads', city_corp='DSCC', is_active=True
+        )
+
+    def _post_register(self, pw1, pw2=None):
+        return self.client.post(reverse('register'), {
+            'first_name': 'Test',
+            'last_name': 'User',
+            'username': f'user_{pw1[:4]}',
+            'email': 'test@example.com',
+            'role': 'citizen',
+            'password1': pw1,
+            'password2': pw2 or pw1,
+        })
+
+    def test_short_password_rejected(self):
+        response = self._post_register('pass12')  # 6 chars
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username='user_pass').exists())
+
+    def test_eight_char_password_accepted(self):
+        response = self._post_register('securepass99')
+        # Should redirect to login on success
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='user_secu').exists())
+
+    def test_get_logout_does_not_log_out(self):
+        user = User.objects.create_user(
+            username='logouttest', password='securepass99', role='citizen'
+        )
+        self.client.force_login(user)
+        # GET request should NOT log the user out
+        self.client.get(reverse('logout'))
+        response = self.client.get(reverse('dashboard'))
+        # Still logged in — should reach dashboard (200), not redirect to login
+        self.assertEqual(response.status_code, 200)
+
+    def test_profile_update_works(self):
+        user = User.objects.create_user(
+            username='profiletest', password='securepass99', role='citizen'
+        )
+        self.client.force_login(user)
+        response = self.client.post(reverse('profile'), {
+            'first_name': 'Updated',
+            'last_name': 'Name',
+            'email': 'updated@example.com',
+            'phone': '+8801700000000',
+            'address': '123 Test Street',
+        })
+        self.assertRedirects(response, reverse('profile'))
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, 'Updated')

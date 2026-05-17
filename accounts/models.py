@@ -14,7 +14,7 @@ class User(AbstractUser):
     ]
     THEME_CHOICES = [('light', 'Light'), ('dark', 'Dark')]
 
-    role                = models.CharField(max_length=20, choices=ROLE_CHOICES, default='citizen')
+    role                = models.CharField(max_length=20, choices=ROLE_CHOICES, default='citizen', db_index=True)
     phone               = models.CharField(max_length=20, blank=True)
     address             = models.TextField(blank=True)
     theme               = models.CharField(max_length=10, choices=THEME_CHOICES, default='light')

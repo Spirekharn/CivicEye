@@ -80,6 +80,23 @@ def detect_city_corp(location_text):
     return 'DSCC'
 
 
+# ---------------------------------------------------------------------------
+# Extensibility note
+# ---------------------------------------------------------------------------
+# This router currently handles Bangladesh's 12 city corporations (DNCC,
+# DSCC, CCC, SCC, RCC, KCC, BCC, NCC, GCC, MCC, COCC, RNCC).
+#
+# To extend routing to non-municipal authorities (e.g. DESCO / DPDC for
+# electricity, WASA for water, BTCL/TGCL for telecoms):
+#   1. Add a secondary routing table keyed by (category, city_corp).
+#   2. Populate it from FUTURE_AUTHORITIES in config/settings.py.
+#   3. Call it from get_department_for_complaint() after the primary lookup
+#      so existing city-corp departments always take precedence.
+#
+# No code changes are needed here today — the hook is in settings.py.
+# ---------------------------------------------------------------------------
+
+
 def get_department_for_complaint(category, city_corp):
     """
     Given a complaint category and city corporation, find the matching
