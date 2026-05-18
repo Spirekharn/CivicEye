@@ -166,8 +166,8 @@ def register_view(request):
         if pw1 != pw2:
             messages.error(request, 'Passwords do not match.')
             return render(request, 'accounts/register.html', ctx)
-        if len(pw1) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
+        if len(pw1) < 5:
+            messages.error(request, 'Password must be at least 5 characters.')
             return render(request, 'accounts/register.html', ctx)
         user = User.objects.create_user(
             username=username, email=email, password=pw1,
@@ -325,8 +325,8 @@ def profile_view(request):
             new_pw2 = request.POST.get('new_password2', '')
             if not u.check_password(old_pw):
                 messages.error(request, 'Current password is incorrect.')
-            elif len(new_pw1) < 8:
-                messages.error(request, 'New password must be at least 8 characters.')
+            elif len(new_pw1) < 5:
+                messages.error(request, 'New password must be at least 5 characters.')
             elif new_pw1 != new_pw2:
                 messages.error(request, 'New passwords do not match.')
             else:
