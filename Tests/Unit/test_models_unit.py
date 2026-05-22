@@ -21,6 +21,7 @@ pytestmark = pytest.mark.django_db  # why: allow database operations in tests
 
 # ─── factory helpers ────────────────────────────────────────────────────────
 
+
 def make_dept(name="Roads Dept", slug="roads", city_corp="DSCC"):
     return Department.objects.create(
         name=name, slug=slug, city_corp=city_corp,
@@ -61,6 +62,7 @@ def make_complaint(citizen=None, dept=None, status="submitted",
 
 
 # ─── User model ─────────────────────────────────────────────────────────────
+
 
 def test_user_str_shows_username_and_role():
     u = make_user(username="alice", role="citizen")
@@ -116,6 +118,7 @@ def test_user_is_finance_flag():
 
 
 # ─── Department model ────────────────────────────────────────────────────────
+
 
 def test_department_str_includes_name_and_city_corp():
     dept = make_dept(name="Sanitation HQ", city_corp="DNCC")
@@ -225,6 +228,7 @@ def test_co_reporters_can_be_added_and_removed():
 
 # ─── ComplaintStatusHistory ──────────────────────────────────────────────────
 
+
 def test_status_history_created_on_manual_insert():
     admin = make_user(username="admin_hist", role="admin")
     c = make_complaint()
@@ -256,6 +260,7 @@ def test_status_history_ordering_is_oldest_first():
 
 
 # ─── ComplaintTransferRequest ────────────────────────────────────────────────
+
 
 def test_transfer_request_str_contains_complaint_and_target_dept():
     dept_a = make_dept(name="Dept A", slug="roads", city_corp="DSCC")
@@ -337,6 +342,7 @@ def test_feedback_linked_to_complaint_one_to_one():
 
 
 # ─── DepartmentBudget ────────────────────────────────────────────────────────
+
 
 def test_budget_unique_per_department_and_fiscal_year():
     sa = make_user(username="sa_unique", role="super_admin")
@@ -445,6 +451,7 @@ def test_notification_ordering_is_newest_first():
 
 
 # ─── CATEGORY_WORKER_TYPE mapping ────────────────────────────────────────────
+
 
 def test_category_worker_type_covers_all_physical_categories():
     physical = ["roads", "water", "sanitation", "parks", "building", "environment", "fire", "health"]

@@ -12,6 +12,7 @@ pytestmark = pytest.mark.django_db  # why: enable database access in tests
 
 # ─── factory helpers ─────────────────────────────────────────────────────────
 
+
 def make_dept(name="Test Roads Dept", slug="roads", city_corp="DSCC"):
     return Department.objects.create(
         name=name, slug=slug, city_corp=city_corp, is_active=True
@@ -19,6 +20,7 @@ def make_dept(name="Test Roads Dept", slug="roads", city_corp="DSCC"):
 
 
 # ─── RegisterForm ─────────────────────────────────────────────────────────────
+
 
 def test_register_form_valid_citizen():
     form = RegisterForm(data={
@@ -92,6 +94,7 @@ def test_register_form_rejects_invalid_role_choice():
     })
     assert form.is_valid() is False  # why: invalid role should fail
     assert "role" in form.errors  # why: confirm role field error
+
 
 
 def test_register_form_rejects_weak_password():

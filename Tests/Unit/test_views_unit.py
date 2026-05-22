@@ -19,6 +19,7 @@ pytestmark = pytest.mark.django_db
 
 # ─── factory helpers ─────────────────────────────────────────────────────────
 
+
 def make_dept(name="Roads Dept", slug="roads", city_corp="DSCC"):
     return Department.objects.create(
         name=name, slug=slug, city_corp=city_corp,
@@ -56,6 +57,7 @@ def make_complaint(citizen=None, dept=None, status="submitted",
 
 
 # ─── Authentication / redirect views ─────────────────────────────────────────
+
 
 def test_home_view_redirects_authenticated_user_to_dashboard(client):
     u = make_user(username="home_cit")
@@ -580,6 +582,7 @@ def test_super_admin_can_toggle_user_active(client):
 
 # ─── Profile view ─────────────────────────────────────────────────────────────
 
+
 def test_profile_view_returns_200_for_authenticated_user(client):
     u = make_user(username="profile_cit")
     client.force_login(u)
@@ -655,6 +658,7 @@ def test_mark_read_marks_notification_as_read(client):
 
 
 # ─── Department views ─────────────────────────────────────────────────────────
+
 
 def test_department_list_returns_200(client):
     u = make_user(username="dept_list_user")
