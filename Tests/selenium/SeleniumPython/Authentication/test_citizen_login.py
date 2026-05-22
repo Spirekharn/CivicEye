@@ -1,40 +1,51 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
 
 def test_citizen_login(driver):
 
-    # open login page
-    driver.get("http://127.0.0.1:8000/accounts/login/")
+    citizens = [
+        ("Swagoto", "23101124"),
+        ("Nabiha", "23101125"),
+    ]
 
-    # wait for username field
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "username"))
-    )
+    for username_value, password_value in citizens:
 
-    # find fields
-    username = driver.find_element(By.NAME, "username")
-    password = driver.find_element(By.NAME, "password")
+        # 🔥 HARD RESET SESSION
+        driver.delete_all_cookies()
 
-    # clear fields
-    username.clear()
-    password.clear()
+        # OPEN LOGIN PAGE
+        driver.get("http://127.0.0.1:8000/accounts/login/")
 
-    # enter credentials
-    username.send_keys("nabiha")
-    password.send_keys("nnnnnn")
+        # WAIT FOR LOGIN FORM
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "username"))
+        )
 
-    # click login button
-    driver.find_element(By.CSS_SELECTOR, "form button").click()
+        username = driver.find_element(By.NAME, "username")
+        password = driver.find_element(By.NAME, "password")
 
-    # wait after login attempt
-    time.sleep(5)
+        username.clear()
+        password.clear()
 
-    # debug info
-    print("Current URL:", driver.current_url)
-    print(driver.page_source)
+        username.send_keys(username_value)
+        password.send_keys(password_value)
 
-    # verify login success
-    assert "login" not in driver.current_url
+        driver.find_element(By.CSS_SELECTOR, "form button").click()
+
+        WebDriverWait(driver, 10).until(
+            lambda d: "/login" not in d.current_url.lower()
+        )
+
+        print(f"Logged in as {username_value} → {driver.current_url}")
+
+        assert (
+            "login" not in driver.current_url.lower()
+            and (
+                "citizen" in driver.page_source.lower()
+                or "dashboard" in driver.page_source.lower()
+                or "complaint" in driver.page_source.lower()
+                or "tracking" in driver.page_source.lower()
+            )
+        )

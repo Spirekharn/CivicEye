@@ -14,7 +14,7 @@ def test_tech_dashboard(driver):
         EC.presence_of_element_located((By.NAME, "username"))
     )
 
-    driver.find_element(By.NAME, "username").send_keys("sujan")
+    driver.find_element(By.NAME, "username").send_keys("Sujan")
     driver.find_element(By.NAME, "password").send_keys("23101120")
 
     driver.find_element(By.XPATH, "//button[@type='submit']").click()

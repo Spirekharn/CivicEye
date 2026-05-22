@@ -13,7 +13,7 @@ def test_profile_page(driver):
         EC.presence_of_element_located((By.NAME, "username"))
     )
 
-    driver.find_element(By.NAME, "username").send_keys("SSNS")
+    driver.find_element(By.NAME, "username").send_keys("SSNSTCE")
     driver.find_element(By.NAME, "password").send_keys("SSNSTCE")
 
     driver.find_element(By.XPATH, "//button[@type='submit']").click()

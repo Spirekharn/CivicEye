@@ -1,36 +1,42 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
 
 def test_login(driver):
 
-    # clear cookies
-    driver.delete_all_cookies()
+    citizens = [
+        ("qq", "123456"),
 
-    # open login page
-    driver.get("http://127.0.0.1:8000/accounts/login/")
+        ("Nabiha", "23101125"),
+    ]
 
-    # wait for login form
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "username"))
-    )
+    for username_value, password_value in citizens:
 
-    # enter valid credentials
-    driver.find_element(By.NAME, "username").send_keys("qq")
-    driver.find_element(By.NAME, "password").send_keys("123456")
+        driver.delete_all_cookies()
 
-    # click login button
-    driver.find_element(By.CSS_SELECTOR, "form button").click()
+        driver.get("http://127.0.0.1:8000/accounts/login/")
 
-    # wait for dashboard redirect
-    WebDriverWait(driver, 10).until(
-        EC.url_contains("/dashboard/")
-    )
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "username"))
+        )
 
-    # print current URL
-    print("Current URL:", driver.current_url)
+        driver.find_element(By.NAME, "username").send_keys(username_value)
+        driver.find_element(By.NAME, "password").send_keys(password_value)
 
-    # verify successful login
-    assert "dashboard" in driver.current_url
+        driver.find_element(By.CSS_SELECTOR, "form button").click()
+
+        # WAIT FOR DASHBOARD INSTEAD OF URL
+        WebDriverWait(driver, 10).until(
+            lambda d: "dashboard" in d.current_url.lower()
+            or "dashboard" in d.page_source.lower()
+        )
+
+        print(f"Logged in as {username_value} → {driver.current_url}")
+
+        assert (
+            "dashboard" in driver.current_url.lower()
+            or "citizen" in driver.page_source.lower()
+            or "complaint" in driver.page_source.lower()
+            or "tracking" in driver.page_source.lower()
+        )

@@ -14,7 +14,7 @@ def test_profile_page(driver):
     )
 
     driver.find_element(By.NAME, "username").send_keys("Nabiha")
-    driver.find_element(By.NAME, "password").send_keys("nnnnnn")
+    driver.find_element(By.NAME, "password").send_keys("23101125")
 
     driver.find_element(By.XPATH, "//button[@type='submit']").click()
 

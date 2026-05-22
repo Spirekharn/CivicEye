@@ -23,7 +23,7 @@ def login(driver, username, password):
 
 def test_admin_access_control(driver):
     # LOGIN
-    login(driver, "SSNS", "SSNSTCE")
+    login(driver, "SSNSTCE", "SSNSTCE")
 
     # Try admin access
     driver.get("http://127.0.0.1:8000/admin/")

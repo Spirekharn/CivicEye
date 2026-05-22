@@ -8,7 +8,7 @@ def test_admin_dashboard(driver):
 
     driver.get("http://127.0.0.1:8000/accounts/login/")
 
-    driver.find_element(By.NAME, "username").send_keys("SSNS")
+    driver.find_element(By.NAME, "username").send_keys("SSNSTCE")
     driver.find_element(By.NAME, "password").send_keys("SSNSTCE")
 
     driver.find_element(By.XPATH, "//button[@type='submit']").click()

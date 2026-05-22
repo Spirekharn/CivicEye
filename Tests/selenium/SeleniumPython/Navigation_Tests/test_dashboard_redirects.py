@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def test_sidebar_navigation(driver):
     driver.get("http://127.0.0.1:8000/accounts/login/")
 
-    driver.find_element(By.NAME, "username").send_keys("SSNS")
+    driver.find_element(By.NAME, "username").send_keys("SSNSTCE")
     driver.find_element(By.NAME, "password").send_keys("SSNSTCE")
 
     driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()

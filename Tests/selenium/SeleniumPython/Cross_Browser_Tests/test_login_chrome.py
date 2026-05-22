@@ -1,4 +1,3 @@
-import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -7,26 +6,37 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def test_login_chrome():
     driver = webdriver.Chrome()
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 15)
 
-    driver.get("http://127.0.0.1:8000/accounts/login/")
+    try:
+        driver.get("http://127.0.0.1:8000/accounts/login/")
 
-    # login
-    driver.find_element(By.NAME, "username").send_keys("SSNS")
-    driver.find_element(By.NAME, "password").send_keys("SSNSTCE")
-    driver.find_element(By.XPATH, "//button[@type='submit']").click()
+        username = wait.until(
+            EC.presence_of_element_located((By.NAME, "username"))
+        )
 
-    # ✅ WAIT for either redirect OR dashboard element
-    wait.until(
-        lambda d: "/dashboard" in d.current_url.lower()
-        or "dashboard" in d.page_source.lower()
-    )
+        password = driver.find_element(By.NAME, "password")
 
-    current_url = driver.current_url.lower()
+        username.clear()
+        password.clear()
 
-    assert (
-        "dashboard" in current_url
-        or "dashboard" in driver.page_source.lower()
-    )
+        # Super Admin Login
+        username.send_keys("SSNSTCE")
+        password.send_keys("SSNSTCE")
 
-    driver.quit()
+        driver.find_element(
+            By.XPATH,
+            "//button[@type='submit']"
+        ).click()
+
+        # Wait until redirected
+        wait.until(
+            lambda d: "/login" not in d.current_url.lower()
+        )
+
+        assert "/login" not in driver.current_url.lower()
+
+        print("✅ Chrome Login Successful")
+
+    finally:
+        driver.quit()

@@ -30,22 +30,25 @@ def test_invalid_login(driver):
     # Submit form
     driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
-    # Wait for page reload (important)
+    # Wait until login page reloads
     wait.until(EC.presence_of_element_located((By.NAME, "username")))
+    wait.until(EC.presence_of_element_located((By.NAME, "password")))
 
-    # ️ ASSERTION 1: still on login page
+    # Re-fetch fresh elements after reload
+    username_field = driver.find_element(By.NAME, "username")
+    password_field = driver.find_element(By.NAME, "password")
+
+    # ASSERTION 1
     assert "/accounts/login/" in driver.current_url
 
-    #  ASSERTION 2: login form still exists
-    assert driver.find_element(By.NAME, "username").is_displayed()
-    assert driver.find_element(By.NAME, "password").is_displayed()
+    # ASSERTION 2
+    assert username_field.is_displayed()
+    assert password_field.is_displayed()
 
-    # ASSERTION 3: check for Django error message (if rendered)
+    # ASSERTION 3
     error_elements = driver.find_elements(By.CLASS_NAME, "errorlist")
 
-    # If your backend shows errors, this will catch them
     if error_elements:
         assert True
     else:
-        # fallback: still valid negative test
         assert "dashboard" not in driver.current_url.lower()

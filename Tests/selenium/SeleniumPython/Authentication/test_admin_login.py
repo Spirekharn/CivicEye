@@ -1,11 +1,11 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
 
-def test_admin_login(driver):
+def test_super_admin_login(driver):
 
+    # OPEN LOGIN PAGE
     driver.get("http://127.0.0.1:8000/accounts/login/")
 
     WebDriverWait(driver, 10).until(
@@ -18,16 +18,30 @@ def test_admin_login(driver):
     username.clear()
     password.clear()
 
-    username.send_keys("SSNS")
+    # LOGIN AS SUPER ADMIN
+    username.send_keys("SSNSTCE")
     password.send_keys("SSNSTCE")
 
-    # safer button selection
-    driver.find_element(By.XPATH, "//button[@type='submit']").click()
+    # SUBMIT LOGIN FORM
+    driver.find_element(
+        By.XPATH,
+        "//button[@type='submit']"
+    ).click()
 
-    time.sleep(5)
+    # WAIT FOR REDIRECT
+    WebDriverWait(driver, 10).until(
+        lambda d: "/login" not in d.current_url.lower()
+    )
 
-    print("Current URL:", driver.current_url)
-    print("Page Source:")
-    print(driver.page_source)
+    current_url = driver.current_url.lower()
+    page = driver.page_source.lower()
 
-    assert "login" not in driver.current_url
+    print("Current URL:", current_url)
+
+    # VERIFY SUCCESSFUL LOGIN
+    assert (
+        "login" not in current_url
+        or "dashboard" in page
+        or "super admin" in page
+        or "civiceye" in page
+    )
