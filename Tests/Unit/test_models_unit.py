@@ -301,6 +301,7 @@ def test_transfer_request_default_status_is_pending():
 
 # ─── SurveyReport ────────────────────────────────────────────────────────────
 
+
 def test_survey_report_linked_to_complaint_one_to_one():
     dept = make_dept(slug="health", name="Health Dept")
 
@@ -324,6 +325,7 @@ def test_survey_report_linked_to_complaint_one_to_one():
 
 
 # ─── ComplaintFeedback ───────────────────────────────────────────────────────
+
 
 def test_feedback_linked_to_complaint_one_to_one():
     c = make_complaint(status="resolved")
@@ -379,6 +381,7 @@ def test_budget_str_includes_dept_name_fiscal_year_and_amount():
 
 # ─── Expense ─────────────────────────────────────────────────────────────────
 
+
 def test_expense_default_status_is_pending():
     dept = make_dept(name="Expense Dept", slug="transport", city_corp="RCC")
 
@@ -409,6 +412,7 @@ def test_expense_str_contains_title_amount_status():
 
 
 # ─── Notification ────────────────────────────────────────────────────────────
+
 
 def test_notification_str_contains_username_and_title():
     u = make_user(username="notif_user")

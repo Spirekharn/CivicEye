@@ -437,6 +437,7 @@ def test_citizen_redirected_from_worker_tasks(client):
 
 # ─── Public dashboard ─────────────────────────────────────────────────────────
 
+
 def test_public_dashboard_accessible_to_citizen(client):
     citizen = make_user(username="pub_cit")
     client.force_login(citizen)
@@ -527,6 +528,7 @@ def test_non_super_admin_cannot_access_transfer_review(client):
 
 # ─── Admin users management ───────────────────────────────────────────────────
 
+
 def test_super_admin_can_access_admin_users_page(client):
     sa = make_user(username="sa_users", role="super_admin")
     client.force_login(sa)
@@ -609,6 +611,7 @@ def test_profile_view_updates_first_and_last_name(client):
 
 # ─── Static / informational pages ────────────────────────────────────────────
 
+
 def test_about_page_returns_200(client):
     response = client.get(reverse("about"))
     assert response.status_code == 200
@@ -635,6 +638,7 @@ def test_terms_page_returns_200(client):
 
 
 # ─── Notification views ───────────────────────────────────────────────────────
+
 
 def test_notification_list_returns_200_for_authenticated_user(client):
     u = make_user(username="notif_list_user")

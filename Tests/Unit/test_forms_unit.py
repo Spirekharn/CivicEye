@@ -112,6 +112,7 @@ def test_register_form_rejects_weak_password():
 
 # ─── ComplaintForm ────────────────────────────────────────────────────────────
 
+
 def test_complaint_form_valid_with_title_and_description():
     form = ComplaintForm(data={
         "title":       "Pothole on main road",
@@ -157,6 +158,7 @@ def test_complaint_form_accepts_title_exactly_at_max_length():
         "description": "Valid description.",
     })
     assert form.is_valid(), form.errors  # why: max allowed length should pass
+
 
 
 def test_complaint_form_only_exposes_allowed_fields():
