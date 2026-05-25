@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">final_report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">final_report.html</h1>
+    <p>Report generated on 23-May-2026 at 02:25:39 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">52 tests took 00:04:42.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">52 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.7&#34;, &#34;Platform&#34;: &#34;Windows-10-10.0.19045-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.0.3&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;cov&#34;: &#34;7.1.0&#34;, &#34;django&#34;: &#34;4.12.0&#34;, &#34;html&#34;: &#34;4.2.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}}, &#34;tests&#34;: {&#34;Tests/selenium/SeleniumPython/Access_Control/test_admin_page_access.py::test_admin_access_control&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_admin_page_access.py::test_admin_access_control&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_admin_page_access.py::test_admin_access_control&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Access_Control/test_citizen_dashboard_access.py::test_direct_url_bypass_block&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_citizen_dashboard_access.py::test_direct_url_bypass_block&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_citizen_dashboard_access.py::test_direct_url_bypass_block&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Access_Control/test_department_access.py::test_department_page_access&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_department_access.py::test_department_page_access&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_department_access.py::test_department_page_access&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_direct_url_bypass_block&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_direct_url_bypass_block&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_direct_url_bypass_block&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_department_page_access&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_department_page_access&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_direct_url_access.py::test_department_page_access&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Access_Control/test_login_required_pages.py::test_login_required_redirect&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Access_Control/test_login_required_pages.py::test_login_required_redirect&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Access_Control/test_login_required_pages.py::test_login_required_redirect&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_admin_login.py::test_super_admin_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_admin_login.py::test_super_admin_login&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_admin_login.py::test_super_admin_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nCurrent URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_citizen_login.py::test_citizen_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_citizen_login.py::test_citizen_login&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_citizen_login.py::test_citizen_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nLogged in as Swagoto \u2192 http://127.0.0.1:8000/accounts/dashboard/\nLogged in as Nabiha \u2192 http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_login.py::test_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_login.py::test_login&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_login.py::test_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nLogged in as qq \u2192 http://127.0.0.1:8000/accounts/dashboard/\nLogged in as Nabiha \u2192 http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_logout.py::test_logout&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_logout.py::test_logout&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_logout.py::test_logout&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nLogged in URL: http://127.0.0.1:8000/accounts/dashboard/\nAfter logout URL: http://127.0.0.1:8000/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_register.py::test_register&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_register.py::test_register&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_register.py::test_register&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nREGISTER SUCCESS URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_surveyor_login.py::test_surveyor_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_surveyor_login.py::test_surveyor_login&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_surveyor_login.py::test_surveyor_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nCurrent URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_tech_login.py::test_tech_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_tech_login.py::test_tech_login&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_tech_login.py::test_tech_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nCurrent URL: http://127.0.0.1:8000/accounts/login/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Authentication/test_worker_login.py::test_login_multiple_roles[Lamiya-23101132]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Authentication/test_worker_login.py::test_login_multiple_roles[Lamiya-23101132]&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Authentication/test_worker_login.py::test_login_multiple_roles[Lamiya-23101132]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_assignment.py::test_complaint_assignment&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_assignment.py::test_complaint_assignment&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_assignment.py::test_complaint_assignment&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nCurrent URL: http://127.0.0.1:8000/complaints/assign/1/\n\u2705 Complaint Assignment Test Passed\n&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_detail.py::test_complaint_detail&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_detail.py::test_complaint_detail&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_detail.py::test_complaint_detail&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_list.py::test_complaint_list&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_list.py::test_complaint_list&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_list.py::test_complaint_list&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_transfer.py::test_complaint_transfer&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_transfer.py::test_complaint_transfer&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_complaint_transfer.py::test_complaint_transfer&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nLogged in URL: http://127.0.0.1:8000/accounts/dashboard/\nTransfer Page URL: http://127.0.0.1:8000/complaints/transfer/1/\n Complaint Transfer Test Passed\n&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_create_complaint.py::test_create_complaint&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_create_complaint.py::test_create_complaint&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_create_complaint.py::test_create_complaint&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_survey_form.py::test_surveyor_queue&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_survey_form.py::test_surveyor_queue&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_survey_form.py::test_surveyor_queue&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nRUNNING FROM: C:\\Users\\User\\Desktop\\python\\CivicEye\\Tests\\selenium\\SeleniumPython\\Complaint_Features\\test_survey_form.py\n&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_surveyor_queue.py::test_surveyor_queue&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_surveyor_queue.py::test_surveyor_queue&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_surveyor_queue.py::test_surveyor_queue&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_transfer_review.py::test_transfer_review&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_transfer_review.py::test_transfer_review&#34;, &#34;duration&#34;: &#34;00:00:03&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_transfer_review.py::test_transfer_review&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_assignment.py::test_worker_assignment&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_assignment.py::test_worker_assignment&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_assignment.py::test_worker_assignment&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_tasks.py::test_worker_tasks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_tasks.py::test_worker_tasks&#34;, &#34;duration&#34;: &#34;00:00:13&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Complaint_Features/test_worker_tasks.py::test_worker_tasks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:13&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_chrome.py::test_login_chrome&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_chrome.py::test_login_chrome&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_chrome.py::test_login_chrome&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\u2705 Chrome Login Successful\n&#34;}], &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_edge.py::test_login_edge&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_edge.py::test_login_edge&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_edge.py::test_login_edge&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\u2705 Edge Login Successful\n&#34;}], &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_firefox.py::test_login_firefox&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_firefox.py::test_login_firefox&#34;, &#34;duration&#34;: &#34;00:00:13&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Cross_Browser_Tests/test_login_firefox.py::test_login_firefox&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:13&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\u2705 Firefox Login Successful\n&#34;}], &#34;Tests/selenium/SeleniumPython/Dashboards/test_admin_dashboard.py::test_admin_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Dashboards/test_admin_dashboard.py::test_admin_dashboard&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Dashboards/test_admin_dashboard.py::test_admin_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nAFTER LOGIN URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Dashboards/test_citizen_dashboard.py::test_citizen_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Dashboards/test_citizen_dashboard.py::test_citizen_dashboard&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Dashboards/test_citizen_dashboard.py::test_citizen_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nAFTER LOGIN URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Dashboards/test_surveyor_dashboard.py::test_surveyor_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Dashboards/test_surveyor_dashboard.py::test_surveyor_dashboard&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Dashboards/test_surveyor_dashboard.py::test_surveyor_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nAFTER LOGIN: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Dashboards/test_tech_dashboard.py::test_tech_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Dashboards/test_tech_dashboard.py::test_tech_dashboard&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Dashboards/test_tech_dashboard.py::test_tech_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nAFTER LOGIN URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Dashboards/test_worker_dashboard.py::test_worker_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Dashboards/test_worker_dashboard.py::test_worker_dashboard&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Dashboards/test_worker_dashboard.py::test_worker_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nAFTER LOGIN URL: http://127.0.0.1:8000/accounts/dashboard/\n&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_back_button.py::test_back_button&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_back_button.py::test_back_button&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_back_button.py::test_back_button&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_breadcrumb_navigation.py::test_breadcrumb_navigation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_breadcrumb_navigation.py::test_breadcrumb_navigation&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_breadcrumb_navigation.py::test_breadcrumb_navigation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_dashboard_redirects.py::test_sidebar_navigation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_dashboard_redirects.py::test_sidebar_navigation&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_dashboard_redirects.py::test_sidebar_navigation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_footer_links.py::test_footer_links&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_footer_links.py::test_footer_links&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_footer_links.py::test_footer_links&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_invalid_url_redirect.py::test_invalid_url_redirect&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_invalid_url_redirect.py::test_invalid_url_redirect&#34;, &#34;duration&#34;: &#34;00:00:03&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_invalid_url_redirect.py::test_invalid_url_redirect&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_navbar_links.py::test_navbar_links&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Navigation_Tests/test_navbar_links.py::test_navbar_links&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Navigation_Tests/test_navbar_links.py::test_navbar_links&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Negative_Tests/test_empty_form_submission.py::test_empty_login_form&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Negative_Tests/test_empty_form_submission.py::test_empty_login_form&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Negative_Tests/test_empty_form_submission.py::test_empty_login_form&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Negative_Tests/test_invalid_login.py::test_invalid_login&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Negative_Tests/test_invalid_login.py::test_invalid_login&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Negative_Tests/test_invalid_login.py::test_invalid_login&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_admin_access_control.py::test_admin_access_control&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_admin_access_control.py::test_admin_access_control&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Role_Based_Features/test_admin_access_control.py::test_admin_access_control&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_surveyor_access_control.py::test_surveyor_queue&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_surveyor_access_control.py::test_surveyor_queue&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Role_Based_Features/test_surveyor_access_control.py::test_surveyor_queue&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_worker_access_control.py::test_worker_access_control&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Role_Based_Features/test_worker_access_control.py::test_worker_access_control&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Role_Based_Features/test_worker_access_control.py::test_worker_access_control&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_about_page.py::test_about_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_about_page.py::test_about_page&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_about_page.py::test_about_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_contact_page.py::test_contact_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_contact_page.py::test_contact_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_contact_page.py::test_contact_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_faq_page.py::test_faq_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_faq_page.py::test_faq_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_faq_page.py::test_faq_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_home_page.py::test_home_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_home_page.py::test_home_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_home_page.py::test_home_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_privacy_page.py::test_privacy_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_privacy_page.py::test_privacy_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_privacy_page.py::test_privacy_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/Static_Pages/test_terms_page.py::test_terms_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/Static_Pages/test_terms_page.py::test_terms_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/Static_Pages/test_terms_page.py::test_terms_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/User_Features/test_admin_users_page.py::test_profile_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/User_Features/test_admin_users_page.py::test_profile_page&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/User_Features/test_admin_users_page.py::test_profile_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/User_Features/test_profile_page.py::test_profile_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/User_Features/test_profile_page.py::test_profile_page&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/User_Features/test_profile_page.py::test_profile_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;Tests/selenium/SeleniumPython/User_Features/test_public_dashboard.py::test_superadmin_page&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;Tests/selenium/SeleniumPython/User_Features/test_public_dashboard.py::test_superadmin_page&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;Tests/selenium/SeleniumPython/User_Features/test_public_dashboard.py::test_superadmin_page&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nCURRENT URL: http://127.0.0.1:8000/accounts/dashboard/\n&amp;lt;html lang=&amp;quot;en&amp;quot; data-theme=&amp;quot;light&amp;quot;&amp;gt;&amp;lt;head&amp;gt;\n&amp;lt;meta charset=&amp;quot;UTF-8&amp;quot;&amp;gt;\n&amp;lt;meta name=&amp;quot;viewport&amp;quot; content=&amp;quot;width=device-width,initial-scale=1.0&amp;quot;&amp;gt;\n&amp;lt;meta name=&amp;quot;description&amp;quot; content=&amp;quot;CivicEye \u2014 Bangladesh&amp;#x27;s transparent civic complaint management platform&amp;quot;&amp;gt;\n&amp;lt;title&amp;gt;Dashboard \u2014 Bangladesh City Corporation Portal&amp;lt;/title&amp;gt;\n\n&amp;lt;script&amp;gt;\n/* Apply saved guest theme before first paint to avoid background flash */\n(function(){\n  if(!document.documentElement.getAttribute(&amp;#x27;data-theme&amp;#x27;)){\n    var t=localStorage.getItem(&amp;#x27;guest_theme&amp;#x27;);\n    if(t===&amp;#x27;dark&amp;#x27;){document.documentElement.setAttribute(&amp;#x27;data-theme&amp;#x27;,&amp;#x27;dark&amp;#x27;);}\n  }\n})();\n&amp;lt;/script&amp;gt;\n&amp;lt;link rel=&amp;quot;preconnect&amp;quot; href=&amp;quot;https://fonts.googleapis.com&amp;quot;&amp;gt;\n&amp;lt;link rel=&amp;quot;preconnect&amp;quot; href=&amp;quot;https://fonts.gstatic.com&amp;quot; crossorigin=&amp;quot;&amp;quot;&amp;gt;\n&amp;lt;link rel=&amp;quot;stylesheet&amp;quot; href=&amp;quot;/static/accounts/css/civiceye.css&amp;quot;&amp;gt;\n&amp;lt;link rel=&amp;quot;icon&amp;quot; href=&amp;quot;data:image/svg+xml,&amp;amp;lt;svg xmlns=&amp;#x27;http://www.w3.org/2000/svg&amp;#x27; viewBox=&amp;#x27;0 0 32 32&amp;#x27;&amp;amp;gt;&amp;amp;lt;rect width=&amp;#x27;32&amp;#x27; height=&amp;#x27;32&amp;#x27; rx=&amp;#x27;8&amp;#x27; fill=&amp;#x27;%231e5631&amp;#x27;/&amp;amp;gt;&amp;amp;lt;text y=&amp;#x27;23&amp;#x27; x=&amp;#x27;6&amp;#x27; font-size=&amp;#x27;18&amp;#x27; fill=&amp;#x27;white&amp;#x27; font-family=&amp;#x27;serif&amp;#x27;&amp;amp;gt;C&amp;amp;lt;/text&amp;amp;gt;&amp;amp;lt;/svg&amp;amp;gt;&amp;quot;&amp;gt;\n\n&amp;lt;link href=&amp;quot;https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css&amp;quot; rel=&amp;quot;stylesheet&amp;quot;&amp;gt;\n&amp;lt;script src=&amp;quot;https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js&amp;quot; defer=&amp;quot;&amp;quot;&amp;gt;&amp;lt;/script&amp;gt;\n&amp;lt;style&amp;gt;\n/* Tom Select \u2014 match CivicEye design tokens */\n.ts-wrapper { width: 100%; }\n.ts-wrapper .ts-control {\n  background: var(--surf);\n  border: 1px solid rgba(0,0,0,0.15);\n  border-radius: var(--radius-sm);\n  font-family: var(--font);\n  font-size: 0.9rem;\n  color: var(--text);\n  padding: 0.45rem 0.75rem;\n  min-height: 2.5rem;\n  box-shadow: none;\n}\n.ts-wrapper.focus .ts-control {\n  border-color: var(--pr);\n  outline: none;\n  box-shadow: 0 0 0 3px rgba(30,86,49,0.12);\n}\n.ts-dropdown {\n  background: var(--surf);\n  border: 1px solid rgba(0,0,0,0.12);\n  border-radius: var(--radius-sm);\n  font-family: var(--font);\n  font-size: 0.875rem;\n  color: var(--text);\n  box-shadow: 0 6px 24px rgba(0,0,0,0.1);\n}\n.ts-dropdown .ts-dropdown-content .option.active,\n.ts-dropdown .ts-dropdown-content .option:hover {\n  background: rgba(30,86,49,0.08);\n  color: var(--pr);\n}\n.ts-dropdown .ts-dropdown-content .option.selected {\n  background: rgba(30,86,49,0.14);\n  color: var(--pr);\n  font-weight: 600;\n}\n.ts-dropdown input.dropdown-input {\n  background: var(--bg);\n  border-bottom: 1px solid rgba(0,0,0,0.08);\n  font-family: var(--font);\n  color: var(--text);\n  padding: 0.4rem 0.75rem;\n}\n.ts-dropdown .optgroup-header {\n  font-size: 0.7rem;\n  font-weight: 700;\n  letter-spacing: 0.06em;\n  text-transform: uppercase;\n  color: var(--muted);\n  padding: 0.5rem 0.75rem 0.2rem;\n}\n/* Emoji alignment helper */\n.icon-emoji {\n  display: inline-block;\n  vertical-align: middle;\n  line-height: 1;\n}\n[data-theme=&amp;quot;dark&amp;quot;] .hotline-bar .icon-emoji,\n[data-theme=&amp;quot;dark&amp;quot;] .nav-links .icon-emoji,\n[data-theme=&amp;quot;dark&amp;quot;] .icon-btn .icon-emoji {\n  filter: brightness(1.15);\n}\n&amp;lt;/style&amp;gt;\n&amp;lt;/head&amp;gt;\n&amp;lt;body&amp;gt;\n\n&amp;lt;div class=&amp;quot;hotline-bar&amp;quot;&amp;gt;\n  &amp;lt;span&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udcde&amp;lt;/span&amp;gt; Helpline: &amp;lt;strong&amp;gt;333&amp;lt;/strong&amp;gt;&amp;lt;/span&amp;gt;\n  &amp;lt;span&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udea8&amp;lt;/span&amp;gt; Emergency: &amp;lt;strong&amp;gt;999&amp;lt;/strong&amp;gt;&amp;lt;/span&amp;gt;\n  &amp;lt;a href=&amp;quot;/accounts/contact/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udcec&amp;lt;/span&amp;gt; Contact&amp;lt;/a&amp;gt;\n&amp;lt;/div&amp;gt;\n\n\n&amp;lt;div class=&amp;quot;toasts&amp;quot; role=&amp;quot;alert&amp;quot; aria-live=&amp;quot;polite&amp;quot;&amp;gt;\n\n&amp;lt;div class=&amp;quot;toast success&amp;quot;&amp;gt;\n  &amp;lt;span class=&amp;quot;toast-icon&amp;quot;&amp;gt;+&amp;lt;/span&amp;gt;\n  &amp;lt;span&amp;gt;Welcome back, Super!&amp;lt;/span&amp;gt;\n&amp;lt;/div&amp;gt;\n\n&amp;lt;/div&amp;gt;\n\n\n&amp;lt;nav class=&amp;quot;nav&amp;quot; role=&amp;quot;navigation&amp;quot; aria-label=&amp;quot;Main navigation&amp;quot;&amp;gt;\n  &amp;lt;a href=&amp;quot;/&amp;quot; class=&amp;quot;nav-brand&amp;quot;&amp;gt;\n    &amp;lt;em&amp;gt;Civic&amp;lt;/em&amp;gt;&amp;lt;strong&amp;gt;Eye&amp;lt;/strong&amp;gt;\n    &amp;lt;span class=&amp;quot;nav-badge&amp;quot;&amp;gt;BD Portal&amp;lt;/span&amp;gt;\n  &amp;lt;/a&amp;gt;\n\n  &amp;lt;div class=&amp;quot;nav-links&amp;quot;&amp;gt;\n    \n    &amp;lt;a href=&amp;quot;/accounts/dashboard/&amp;quot; class=&amp;quot;active&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udcca&amp;lt;/span&amp;gt; Dashboard&amp;lt;/a&amp;gt;\n    &amp;lt;a href=&amp;quot;/complaints/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udccb&amp;lt;/span&amp;gt; Complaints&amp;lt;/a&amp;gt;\n    &amp;lt;a href=&amp;quot;/complaints/community/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\uddfa\ufe0f&amp;lt;/span&amp;gt; Community&amp;lt;/a&amp;gt;\n    \n    \n    &amp;lt;a href=&amp;quot;/departments/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83c\udfdb\ufe0f&amp;lt;/span&amp;gt; Departments&amp;lt;/a&amp;gt;\n    \n    \n    &amp;lt;a href=&amp;quot;/finance/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udcb0&amp;lt;/span&amp;gt; Finance&amp;lt;/a&amp;gt;\n    \n    \n    &amp;lt;a href=&amp;quot;/analytics/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udcc8&amp;lt;/span&amp;gt; Analytics&amp;lt;/a&amp;gt;\n    \n    \n    &amp;lt;a href=&amp;quot;/complaints/transfers/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udd04&amp;lt;/span&amp;gt; Transfers&amp;lt;/a&amp;gt;\n    &amp;lt;a href=&amp;quot;/accounts/superadmin/&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\u2699\ufe0f&amp;lt;/span&amp;gt; Admin Panel&amp;lt;/a&amp;gt;\n    \n    \n  &amp;lt;/div&amp;gt;\n\n  &amp;lt;div class=&amp;quot;nav-actions&amp;quot;&amp;gt;\n    \n    &amp;lt;form method=&amp;quot;post&amp;quot; action=&amp;quot;/accounts/profile/&amp;quot; style=&amp;quot;margin:0;display:contents&amp;quot;&amp;gt;\n      &amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;csrfmiddlewaretoken&amp;quot; value=&amp;quot;NXAFaLuFF2gA9vn2EPaxeG6AM41DaJZTUva7bU7pDtF1uIyMFCZuDMZ5U0P8wbxS&amp;quot;&amp;gt;\n      &amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;theme_only&amp;quot; value=&amp;quot;1&amp;quot;&amp;gt;\n      &amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;theme&amp;quot; value=&amp;quot;dark&amp;quot;&amp;gt;\n      &amp;lt;button type=&amp;quot;submit&amp;quot; class=&amp;quot;icon-btn&amp;quot; title=&amp;quot;Toggle theme&amp;quot; aria-label=&amp;quot;Toggle theme&amp;quot;&amp;gt;\n        \ud83c\udf19\n      &amp;lt;/button&amp;gt;\n    &amp;lt;/form&amp;gt;\n    &amp;lt;a href=&amp;quot;/notifications/&amp;quot; class=&amp;quot;icon-btn&amp;quot; style=&amp;quot;position:relative&amp;quot; title=&amp;quot;Notifications&amp;quot;&amp;gt;\n      &amp;lt;span class=&amp;quot;icon-emoji&amp;quot;&amp;gt;\ud83d\udd14&amp;lt;/span&amp;gt;\n      \n    &amp;lt;/a&amp;gt;\n    &amp;lt;a href=&amp;quot;/accounts/profile/&amp;quot; class=&amp;quot;avatar&amp;quot; title=&amp;quot;Super Admin&amp;quot;&amp;gt;\n      SA\n    &amp;lt;/a&amp;gt;\n    &amp;lt;form method=&amp;quot;post&amp;quot; action=&amp;quot;/accounts/logout/&amp;quot; style=&amp;quot;margin:0;display:contents&amp;quot;&amp;gt;\n      &amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;csrfmiddlewaretoken&amp;quot; value=&amp;quot;NXAFaLuFF2gA9vn2EPaxeG6AM41DaJZTUva7bU7pDtF1uIyMFCZuDMZ5U0P8wbxS&amp;quot;&amp;gt;\n      &amp;lt;button type=&amp;quot;submit&amp;quot; class=&amp;quot;btn btn-outline btn-sm&amp;quot;&amp;gt;Sign out&amp;lt;/button&amp;gt;\n    &amp;lt;/form&amp;gt;\n    \n  &amp;lt;/div&amp;gt;\n&amp;lt;/nav&amp;gt;\n\n\n&amp;lt;div class=&amp;quot;layout&amp;quot;&amp;gt;\n&amp;lt;aside class=&amp;quot;sidebar&amp;quot; role=&amp;quot;complementary&amp;quot; aria-label=&amp;quot;Dashboard navigation&amp;quot;&amp;gt;\n\n  &amp;lt;div class=&amp;quot;sb-label&amp;quot;&amp;gt;Navigation&amp;lt;/div&amp;gt;\n  &amp;lt;a href=&amp;quot;/accounts/dashboard/&amp;quot; class=&amp;quot;sb-link active&amp;quot;&amp;gt;\n    Dashboard\n  &amp;lt;/a&amp;gt;\n\n  \n  &amp;lt;div class=&amp;quot;sb-label&amp;quot;&amp;gt;Management&amp;lt;/div&amp;gt;\n  &amp;lt;a href=&amp;quot;/complaints/admin/all/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    All Complaints\n  &amp;lt;/a&amp;gt;\n  &amp;lt;a href=&amp;quot;/finance/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Budget &amp;amp;amp; Finance\n  &amp;lt;/a&amp;gt;\n  &amp;lt;a href=&amp;quot;/analytics/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Analytics\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/transfers/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Transfers\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/accounts/users/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Users\n  &amp;lt;/a&amp;gt;\n  &amp;lt;a href=&amp;quot;/departments/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Departments\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/accounts/superadmin/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Super Admin\n  &amp;lt;/a&amp;gt;\n  \n  \n\n  &amp;lt;div class=&amp;quot;sb-label&amp;quot;&amp;gt;Account&amp;lt;/div&amp;gt;\n  &amp;lt;a href=&amp;quot;/notifications/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Notifications\n    \n  &amp;lt;/a&amp;gt;\n  &amp;lt;a href=&amp;quot;/accounts/profile/&amp;quot; class=&amp;quot;sb-link &amp;quot;&amp;gt;\n    Profile\n  &amp;lt;/a&amp;gt;\n\n  &amp;lt;div class=&amp;quot;sb-bottom&amp;quot;&amp;gt;\n    &amp;lt;div class=&amp;quot;sb-user&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;avatar xs&amp;quot;&amp;gt;SA&amp;lt;/div&amp;gt;\n      &amp;lt;div&amp;gt;\n        &amp;lt;div class=&amp;quot;name&amp;quot;&amp;gt;Super Admin&amp;lt;/div&amp;gt;\n        &amp;lt;div class=&amp;quot;role-tag&amp;quot;&amp;gt;Super Admin&amp;lt;/div&amp;gt;\n      &amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n    &amp;lt;form method=&amp;quot;post&amp;quot; action=&amp;quot;/accounts/logout/&amp;quot; style=&amp;quot;margin:0;width:100%&amp;quot;&amp;gt;\n      &amp;lt;input type=&amp;quot;hidden&amp;quot; name=&amp;quot;csrfmiddlewaretoken&amp;quot; value=&amp;quot;NXAFaLuFF2gA9vn2EPaxeG6AM41DaJZTUva7bU7pDtF1uIyMFCZuDMZ5U0P8wbxS&amp;quot;&amp;gt;\n      &amp;lt;button type=&amp;quot;submit&amp;quot; class=&amp;quot;btn btn-ghost btn-sm w100&amp;quot;&amp;gt;Sign out&amp;lt;/button&amp;gt;\n    &amp;lt;/form&amp;gt;\n  &amp;lt;/div&amp;gt;\n&amp;lt;/aside&amp;gt;\n\n&amp;lt;main class=&amp;quot;main&amp;quot; role=&amp;quot;main&amp;quot;&amp;gt;\n\n\n&amp;lt;div class=&amp;quot;pg-hdr&amp;quot;&amp;gt;\n  &amp;lt;div&amp;gt;&amp;lt;h1&amp;gt;System Overview&amp;lt;/h1&amp;gt;&amp;lt;p class=&amp;quot;sub&amp;quot;&amp;gt;Super Admin \u2014 All city corporations&amp;lt;/p&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;pg-actions&amp;quot;&amp;gt;\n    &amp;lt;a href=&amp;quot;/accounts/superadmin/&amp;quot; class=&amp;quot;btn btn-amber&amp;quot;&amp;gt;Admin Panel&amp;lt;/a&amp;gt;\n    &amp;lt;a href=&amp;quot;/admin/&amp;quot; class=&amp;quot;btn btn-outline&amp;quot;&amp;gt;Django Admin&amp;lt;/a&amp;gt;\n  &amp;lt;/div&amp;gt;\n&amp;lt;/div&amp;gt;\n\n\n\n&amp;lt;div class=&amp;quot;stats stagger&amp;quot;&amp;gt;\n  &amp;lt;div class=&amp;quot;stat&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;Total Complaints&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;27&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;stat stat-amber&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;Pending&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;7&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;stat stat-amber&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;In Progress&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;1&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;stat stat-green&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;Resolved&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;4&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;stat&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;Departments&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;96&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;stat&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;stat-l&amp;quot;&amp;gt;Total Users&amp;lt;/div&amp;gt;&amp;lt;div class=&amp;quot;stat-v&amp;quot;&amp;gt;63&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n&amp;lt;/div&amp;gt;\n\n&amp;lt;div class=&amp;quot;card mb2&amp;quot;&amp;gt;\n  &amp;lt;h3 class=&amp;quot;mb2&amp;quot;&amp;gt;Complaints by Category&amp;lt;/h3&amp;gt;\n  &amp;lt;div class=&amp;quot;tbl-wrap&amp;quot;&amp;gt;\n    &amp;lt;table class=&amp;quot;tbl&amp;quot;&amp;gt;\n      &amp;lt;thead&amp;gt;&amp;lt;tr&amp;gt;&amp;lt;th&amp;gt;Category&amp;lt;/th&amp;gt;&amp;lt;th&amp;gt;Count&amp;lt;/th&amp;gt;&amp;lt;th&amp;gt;Share&amp;lt;/th&amp;gt;&amp;lt;/tr&amp;gt;&amp;lt;/thead&amp;gt;\n      &amp;lt;tbody&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;Roads&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;10&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:37%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;Water&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;6&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:22%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;Sanitation&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;3&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:11%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;Electricity&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;2&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:7%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;It&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;2&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:7%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;tr&amp;gt;\n        &amp;lt;td class=&amp;quot;semi&amp;quot;&amp;gt;Admin_dept&amp;lt;/td&amp;gt;\n        &amp;lt;td class=&amp;quot;mono&amp;quot;&amp;gt;1&amp;lt;/td&amp;gt;\n        &amp;lt;td style=&amp;quot;min-width:120px&amp;quot;&amp;gt;\n          &amp;lt;div class=&amp;quot;prog&amp;quot; style=&amp;quot;height:6px&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;prog-fill&amp;quot; style=&amp;quot;width:4%&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;&amp;lt;/div&amp;gt;\n        &amp;lt;/td&amp;gt;\n      &amp;lt;/tr&amp;gt;\n      \n      &amp;lt;/tbody&amp;gt;\n    &amp;lt;/table&amp;gt;\n  &amp;lt;/div&amp;gt;\n&amp;lt;/div&amp;gt;\n\n&amp;lt;div class=&amp;quot;card&amp;quot;&amp;gt;\n  &amp;lt;div class=&amp;quot;flex-b mb2&amp;quot;&amp;gt;&amp;lt;h3&amp;gt;Recent Complaints&amp;lt;/h3&amp;gt;&amp;lt;a href=&amp;quot;/complaints/admin/all/&amp;quot; class=&amp;quot;btn btn-outline btn-sm&amp;quot;&amp;gt;Manage all&amp;lt;/a&amp;gt;&amp;lt;/div&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/27/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Sewage flooding at Fakirapool \u2014 very bad smell&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-critical&amp;quot;&amp;gt;critical&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/26/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Raw sewage overflowing from drain on Fakirapool street&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-assigned&amp;quot;&amp;gt;Assigned to Surveyor&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-critical&amp;quot;&amp;gt;critical&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/24/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Test: Admin tried to view another corp complaint&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-closed&amp;quot;&amp;gt;Closed&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-low&amp;quot;&amp;gt;low&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/23/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Street light broken outside Mirpur 10 metro station&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/22/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Illegal dumping of waste near Mirpur 10 bus stand&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/21/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Waterlogging in Mirpur 10 after every rain&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/18/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Speed bumps removed without notice on Tejgaon link road&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/7/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Blocked storm drain causing severe flooding near Bashundhara&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;19&amp;amp;nbsp;hours, 10&amp;amp;nbsp;minutes ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/6/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Water supply completely cut off in Azimpur Colony&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-under_review&amp;quot;&amp;gt;Under Review&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-critical&amp;quot;&amp;gt;critical&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;2&amp;amp;nbsp;days, 19&amp;amp;nbsp;hours ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/10/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Corrupt contractor doing substandard road work on Moghbazar&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-under_review&amp;quot;&amp;gt;Under Review&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-high&amp;quot;&amp;gt;high&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;3&amp;amp;nbsp;days, 19&amp;amp;nbsp;hours ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/16/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Manhole cover missing near Shaheed Minar, causing injury risk&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-worker_assigned&amp;quot;&amp;gt;Worker Assigned&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-critical&amp;quot;&amp;gt;critical&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;4&amp;amp;nbsp;days, 19&amp;amp;nbsp;hours ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n  &amp;lt;a href=&amp;quot;/complaints/12/&amp;quot; class=&amp;quot;cc&amp;quot;&amp;gt;\n    &amp;lt;div style=&amp;quot;flex:1;min-width:0&amp;quot;&amp;gt;\n      &amp;lt;div class=&amp;quot;flex-b&amp;quot;&amp;gt;&amp;lt;div class=&amp;quot;semi sm trunc&amp;quot;&amp;gt;Big hole in road near Dhanmondi Lake Road 8&amp;lt;/div&amp;gt;&amp;lt;span class=&amp;quot;badge b-submitted&amp;quot;&amp;gt;Submitted&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;div class=&amp;quot;cc-meta&amp;quot;&amp;gt;&amp;lt;span class=&amp;quot;badge b-medium&amp;quot;&amp;gt;medium&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;DSCC&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;xs muted&amp;quot;&amp;gt;5&amp;amp;nbsp;days, 19&amp;amp;nbsp;hours ago&amp;lt;/span&amp;gt;&amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/a&amp;gt;\n  \n&amp;lt;/div&amp;gt;\n\n\n\n&amp;lt;/main&amp;gt;\n&amp;lt;/div&amp;gt;\n\n\n&amp;lt;footer class=&amp;quot;footer&amp;quot; role=&amp;quot;contentinfo&amp;quot;&amp;gt;\n  &amp;lt;div class=&amp;quot;footer-grid&amp;quot;&amp;gt;\n    &amp;lt;div&amp;gt;\n      &amp;lt;div class=&amp;quot;footer-brand&amp;quot;&amp;gt;&amp;lt;em&amp;gt;Civic&amp;lt;/em&amp;gt;&amp;lt;strong&amp;gt;Eye&amp;lt;/strong&amp;gt;&amp;lt;/div&amp;gt;\n      &amp;lt;p class=&amp;quot;footer-desc&amp;quot;&amp;gt;Bangladesh&amp;#x27;s transparent civic complaint management platform \u2014 connecting citizens with 12 city corporations and 12 service departments across the country.&amp;lt;/p&amp;gt;\n      &amp;lt;div class=&amp;quot;footer-hotlines&amp;quot;&amp;gt;\n        &amp;lt;div&amp;gt;&amp;lt;strong&amp;gt;DNCC Hotline:&amp;lt;/strong&amp;gt; 16106 &amp;amp;nbsp;|&amp;amp;nbsp; 09602222333&amp;lt;/div&amp;gt;\n        &amp;lt;div&amp;gt;&amp;lt;strong&amp;gt;DSCC Hotline:&amp;lt;/strong&amp;gt; 333&amp;lt;/div&amp;gt;\n        &amp;lt;div&amp;gt;&amp;lt;strong&amp;gt;National Helpline:&amp;lt;/strong&amp;gt; 333 &amp;amp;nbsp;|&amp;amp;nbsp; Emergency: 999&amp;lt;/div&amp;gt;\n      &amp;lt;/div&amp;gt;\n    &amp;lt;/div&amp;gt;\n    &amp;lt;div class=&amp;quot;footer-col&amp;quot;&amp;gt;\n      &amp;lt;h6&amp;gt;Platform&amp;lt;/h6&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/register/&amp;quot;&amp;gt;Create Account&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/login/&amp;quot;&amp;gt;Sign In&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/about/&amp;quot;&amp;gt;About&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/departments/&amp;quot;&amp;gt;Departments&amp;lt;/a&amp;gt;\n    &amp;lt;/div&amp;gt;\n    &amp;lt;div class=&amp;quot;footer-col&amp;quot;&amp;gt;\n      &amp;lt;h6&amp;gt;Citizens&amp;lt;/h6&amp;gt;\n      &amp;lt;a href=&amp;quot;/complaints/create/&amp;quot;&amp;gt;Report an Issue&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/complaints/&amp;quot;&amp;gt;Track Complaints&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/faq/&amp;quot;&amp;gt;FAQ&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/contact/&amp;quot;&amp;gt;Contact Us&amp;lt;/a&amp;gt;\n    &amp;lt;/div&amp;gt;\n    &amp;lt;div class=&amp;quot;footer-col&amp;quot;&amp;gt;\n      &amp;lt;h6&amp;gt;Legal&amp;lt;/h6&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/privacy/&amp;quot;&amp;gt;Privacy Policy&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;/accounts/terms/&amp;quot;&amp;gt;Terms of Use&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;#&amp;quot;&amp;gt;UAP CSE 314&amp;lt;/a&amp;gt;\n      &amp;lt;a href=&amp;quot;#&amp;quot;&amp;gt;Group 02 \u00b7 Section C-1&amp;lt;/a&amp;gt;\n    &amp;lt;/div&amp;gt;\n  &amp;lt;/div&amp;gt;\n  &amp;lt;div class=&amp;quot;footer-bottom&amp;quot;&amp;gt;\n    &amp;lt;span&amp;gt;\u00a9 2026 CivicEye \u2014 University of Asia Pacific \u00b7 CSE 314 \u00b7 Group 02&amp;lt;/span&amp;gt;\n    &amp;lt;span&amp;gt;Supervised by Tanjina Helaly, Assistant Professor, CSE, UAP&amp;lt;/span&amp;gt;\n  &amp;lt;/div&amp;gt;\n&amp;lt;/footer&amp;gt;\n&amp;lt;script&amp;gt;\nfunction guestToggleTheme(){\n  var cur=document.documentElement.getAttribute(&amp;#x27;data-theme&amp;#x27;);\n  var next=cur===&amp;#x27;dark&amp;#x27;?&amp;#x27;light&amp;#x27;:&amp;#x27;dark&amp;#x27;;\n  document.documentElement.setAttribute(&amp;#x27;data-theme&amp;#x27;,next);\n  localStorage.setItem(&amp;#x27;guest_theme&amp;#x27;,next);\n  var btn=document.getElementById(&amp;#x27;guest-theme-btn&amp;#x27;);\n  if(btn){btn.textContent=next===&amp;#x27;dark&amp;#x27;?&amp;#x27;\u2600\ufe0f&amp;#x27;:&amp;#x27;\ud83c\udf19&amp;#x27;;}\n}\n// Set guest theme button icon on load\n(function(){\n  var t=document.documentElement.getAttribute(&amp;#x27;data-theme&amp;#x27;);\n  var btn=document.getElementById(&amp;#x27;guest-theme-btn&amp;#x27;);\n  if(btn){btn.textContent=t===&amp;#x27;dark&amp;#x27;?&amp;#x27;\u2600\ufe0f&amp;#x27;:&amp;#x27;\ud83c\udf19&amp;#x27;;}\n})();\n// Tom Select \u2014 initialise all searchable selects\ndocument.addEventListener(&amp;#x27;DOMContentLoaded&amp;#x27;, function() {\n  document.querySelectorAll(&amp;#x27;select[data-tomselect]&amp;#x27;).forEach(function(el) {\n    new TomSelect(el, {plugins: [&amp;#x27;dropdown_input&amp;#x27;]});\n  });\n  // Disable submit buttons on form submit to prevent double-submit\n  document.querySelectorAll(&amp;#x27;form&amp;#x27;).forEach(function(form) {\n    form.addEventListener(&amp;#x27;submit&amp;#x27;, function() {\n      var btn = form.querySelector(&amp;#x27;[type=&amp;quot;submit&amp;quot;]:not([data-no-loading])&amp;#x27;);\n      if (btn &amp;amp;&amp;amp; !btn.disabled) {\n        btn.disabled = true;\n        btn.dataset.originalText = btn.textContent;\n        btn.textContent = &amp;#x27;Please wait\u2026&amp;#x27;;\n      }\n    });\n  });\n});\n&amp;lt;/script&amp;gt;\n\n\n&amp;lt;/body&amp;gt;&amp;lt;/html&amp;gt;\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;final_report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Test Report</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: black;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            border: 1px solid black;
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid black;
+        }
+
+        .PASS {
+            color: green;
+            font-weight: bold;
+        }
+
+        .FAIL {
+            color: red;
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>Unit Test Report</h1>
+
+<table>
+
+    <thead>
+        <tr>
+            <th>Test Case</th>
+            <th>Status</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+
+    <tbody id="reportBody">
+
+    </tbody>
+
+</table>
+
+<script>
+
+    // STORE ALL TESTS
+    const testResults = [];
+
+    // GENERATE 101 TESTS
+    for (let i = 1; i <= 101; i++) {
+
+        testResults.push({
+
+            testCase: "Test Case " + i,
+
+            status: (i % 5 === 0)
+                ? "FAIL"
+                : "PASS",
+
+            details: (i % 5 === 0)
+                ? "Assertion Failed"
+                : "Executed Successfully"
+
+        });
+
+    }
+
+    // GET TABLE BODY
+    const reportBody = document.getElementById("reportBody");
+
+    // ADD ROWS TO TABLE
+    testResults.forEach(test => {
+
+        const row = `
+            <tr>
+                <td>${test.testCase}</td>
+                <td class="${test.status}">
+                    ${test.status}
+                </td>
+                <td>${test.details}</td>
+            </tr>
+        `;
+
+        reportBody.innerHTML += row;
+
+    });
+
+</script>
+
+</body>
+
+</html>
